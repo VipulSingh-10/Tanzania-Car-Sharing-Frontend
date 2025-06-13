@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Car } from 'lucide-react';
 import { OfferRideDTO } from '@/types/api';
+import PlacesAutocomplete from '@/components/PlacesAutocomplete';
+import GoogleMap from '@/components/GoogleMap';
 
 export default function CreateTrip() {
   const { userId } = useAuth();
@@ -99,7 +100,46 @@ export default function CreateTrip() {
     });
   };
 
+  const handlePickupChange = (address: string, lat?: number, lng?: number) => {
+    setTripData({
+      ...tripData,
+      pickupPoint: {
+        latitude: lat || 0,
+        longitude: lng || 0,
+        placeAddress: address,
+      }
+    });
+  };
+
+  const handleDestinationChange = (address: string, lat?: number, lng?: number) => {
+    setTripData({
+      ...tripData,
+      destinationPoint: {
+        latitude: lat || 0,
+        longitude: lng || 0,
+        placeAddress: address,
+      }
+    });
+  };
+
   const vehiclesData = vehicles?.responseContent || [];
+
+  // Prepare map markers
+  const mapMarkers = [];
+  if (tripData.pickupPoint.latitude && tripData.pickupPoint.longitude) {
+    mapMarkers.push({
+      position: { lat: tripData.pickupPoint.latitude, lng: tripData.pickupPoint.longitude },
+      title: 'Pickup Point',
+      info: tripData.pickupPoint.placeAddress,
+    });
+  }
+  if (tripData.destinationPoint.latitude && tripData.destinationPoint.longitude) {
+    mapMarkers.push({
+      position: { lat: tripData.destinationPoint.latitude, lng: tripData.destinationPoint.longitude },
+      title: 'Destination',
+      info: tripData.destinationPoint.placeAddress,
+    });
+  }
 
   return (
     <Layout>
@@ -124,31 +164,36 @@ export default function CreateTrip() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="pickup">Pickup Location *</Label>
-                  <Input
+                  <PlacesAutocomplete
                     id="pickup"
                     placeholder="Enter pickup location"
                     value={tripData.pickupPoint.placeAddress}
-                    onChange={(e) => setTripData({
-                      ...tripData, 
-                      pickupPoint: { ...tripData.pickupPoint, placeAddress: e.target.value }
-                    })}
+                    onChange={handlePickupChange}
                     required
                   />
                 </div>
                 <div>
                   <Label htmlFor="destination">Destination *</Label>
-                  <Input
+                  <PlacesAutocomplete
                     id="destination"
                     placeholder="Enter destination"
                     value={tripData.destinationPoint.placeAddress}
-                    onChange={(e) => setTripData({
-                      ...tripData, 
-                      destinationPoint: { ...tripData.destinationPoint, placeAddress: e.target.value }
-                    })}
+                    onChange={handleDestinationChange}
                     required
                   />
                 </div>
               </div>
+
+              {/* Map View */}
+              {mapMarkers.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Route Preview</Label>
+                  <GoogleMap
+                    markers={mapMarkers}
+                    className="w-full h-64 rounded-lg border"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Search, MapPin, Clock, Users, Car } from 'lucide-react';
+import PlacesAutocomplete from '@/components/PlacesAutocomplete';
+import GoogleMap from '@/components/GoogleMap';
 
 export default function FindRides() {
   const { userId } = useAuth();
@@ -97,6 +99,35 @@ export default function FindRides() {
     }
   };
 
+  const handlePickupChange = (address: string, lat?: number, lng?: number) => {
+    setSearchParams({
+      ...searchParams,
+      pickupPoint: {
+        latitude: lat || 0,
+        longitude: lng || 0,
+        placeAddress: address,
+      }
+    });
+  };
+
+  const handleDestinationChange = (address: string, lat?: number, lng?: number) => {
+    setSearchParams({
+      ...searchParams,
+      destinationPoint: {
+        latitude: lat || 0,
+        longitude: lng || 0,
+        placeAddress: address,
+      }
+    });
+  };
+
+  // Prepare map markers for found rides
+  const mapMarkers = rides.map(ride => ({
+    position: { lat: ride.pickupPoint.latitude, lng: ride.pickupPoint.longitude },
+    title: `${ride.fullName}'s Trip`,
+    info: `${ride.pickupPoint.placeAddress} → ${ride.destinationPoint.placeAddress}`,
+  }));
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -113,32 +144,20 @@ export default function FindRides() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="pickup">Pickup Location</Label>
-                <Input
+                <PlacesAutocomplete
                   id="pickup"
                   placeholder="Enter pickup address"
                   value={searchParams.pickupPoint.placeAddress}
-                  onChange={(e) => setSearchParams({
-                    ...searchParams,
-                    pickupPoint: {
-                      ...searchParams.pickupPoint,
-                      placeAddress: e.target.value
-                    }
-                  })}
+                  onChange={handlePickupChange}
                 />
               </div>
               <div>
                 <Label htmlFor="destination">Destination</Label>
-                <Input
+                <PlacesAutocomplete
                   id="destination"
                   placeholder="Enter destination address"
                   value={searchParams.destinationPoint.placeAddress}
-                  onChange={(e) => setSearchParams({
-                    ...searchParams,
-                    destinationPoint: {
-                      ...searchParams.destinationPoint,
-                      placeAddress: e.target.value
-                    }
-                  })}
+                  onChange={handleDestinationChange}
                 />
               </div>
               <div>
@@ -174,6 +193,21 @@ export default function FindRides() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Map View of Found Rides */}
+        {rides.length > 0 && mapMarkers.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Rides Map</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GoogleMap
+                markers={mapMarkers}
+                className="w-full h-64 rounded-lg border"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {rides.length > 0 && (
           <div className="space-y-4">
