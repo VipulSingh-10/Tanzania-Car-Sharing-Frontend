@@ -3,198 +3,202 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { Car, Search, Plus, Calendar, MapPin, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
-  const { userId } = useAuth();
+  const { userInfo } = useAuth();
 
   const { data: upcomingRides } = useQuery({
-    queryKey: ['upcomingRides', userId],
-    queryFn: () => apiService.getUpcomingRides(userId!),
-    enabled: !!userId,
+    queryKey: ['upcomingRides', userInfo?.userId],
+    queryFn: () => apiService.getUpcomingRides(userInfo!.userId!),
+    enabled: !!userInfo?.userId,
   });
 
   const { data: vehicles } = useQuery({
-    queryKey: ['vehicles', userId],
-    queryFn: () => apiService.getUserVehicles(userId!),
-    enabled: !!userId,
+    queryKey: ['vehicles', userInfo?.userId],
+    queryFn: () => apiService.getUserVehicles(userInfo!.userId!),
+    enabled: !!userInfo?.userId,
   });
 
   const upcomingRidesData = upcomingRides?.responseContent || [];
   const vehiclesData = vehicles?.responseContent || [];
-  const nextRide = upcomingRidesData[0];
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome to your carpool dashboard</p>
+          <h1 className="text-3xl font-bold">Welcome back, {userInfo?.fullName}!</h1>
+          <p className="text-muted-foreground">Here's your carpool dashboard</p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Upcoming Rides</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{upcomingRidesData.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">My Vehicles</CardTitle>
+              <Car className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{vehiclesData.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Rides</CardTitle>
+              <Search className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">-</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Search className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Find Rides</h3>
-                  <p className="text-sm text-muted-foreground">Search for available rides</p>
-                </div>
-              </div>
-              <Button asChild className="w-full mt-4">
-                <Link to="/find-rides">Find Rides</Link>
-              </Button>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Search className="h-5 w-5" />
+                <span>Find a Ride</span>
+              </CardTitle>
+              <CardDescription>Search for available rides in your area</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/find-rides">
+                <Button className="w-full">
+                  Search Rides
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <Plus className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Create Trip</h3>
-                  <p className="text-sm text-muted-foreground">Offer a ride to others</p>
-                </div>
-              </div>
-              <Button asChild className="w-full mt-4" variant="secondary">
-                <Link to="/create-trip">Create Trip</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Calendar className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">My Rides</h3>
-                  <p className="text-sm text-muted-foreground">View your rides</p>
-                </div>
-              </div>
-              <Button asChild className="w-full mt-4" variant="outline">
-                <Link to="/my-rides">View Rides</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Next Ride */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Clock className="h-5 w-5" />
-                <span>Next Ride</span>
+                <Plus className="h-5 w-5" />
+                <span>Offer a Ride</span>
               </CardTitle>
+              <CardDescription>Create a new trip and help others commute</CardDescription>
             </CardHeader>
             <CardContent>
-              {nextRide ? (
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="font-medium">{nextRide.sourceLocation}</p>
-                      <p className="text-sm text-muted-foreground">to {nextRide.destinationLocation}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{new Date(nextRide.departureTime).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Car className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{nextRide.vehicleInfo}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Status: {nextRide.status}</p>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No upcoming rides</p>
-              )}
+              <Link to="/create-trip">
+                <Button className="w-full">
+                  Create Trip
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
-          {/* Vehicle Summary */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Car className="h-5 w-5" />
-                <span>Your Vehicles</span>
+                <span>My Vehicles</span>
               </CardTitle>
+              <CardDescription>Manage your registered vehicles</CardDescription>
             </CardHeader>
             <CardContent>
-              {vehiclesData.length > 0 ? (
-                <div className="space-y-3">
-                  {vehiclesData.slice(0, 3).map((vehicle) => (
-                    <div key={vehicle.vehicleId} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div>
-                        <p className="font-medium">{vehicle.make} {vehicle.model}</p>
-                        <p className="text-sm text-muted-foreground">{vehicle.licensePlate}</p>
-                      </div>
-                      <span className="text-sm text-muted-foreground">{vehicle.seatingCapacity} seats</span>
-                    </div>
-                  ))}
-                  {vehiclesData.length > 3 && (
-                    <p className="text-sm text-muted-foreground">+{vehiclesData.length - 3} more vehicles</p>
-                  )}
-                  <Button asChild variant="outline" size="sm" className="w-full">
-                    <Link to="/vehicles">Manage Vehicles</Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground mb-4">No vehicles registered</p>
-                  <Button asChild size="sm">
-                    <Link to="/vehicles">Add Vehicle</Link>
-                  </Button>
-                </div>
-              )}
+              <Link to="/vehicles">
+                <Button className="w-full" variant="outline">
+                  Manage Vehicles
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{upcomingRidesData.length}</p>
-                <p className="text-sm text-muted-foreground">Upcoming Rides</p>
-              </div>
+            <CardHeader>
+              <CardTitle>Upcoming Rides</CardTitle>
+              <CardDescription>Your next scheduled rides</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {upcomingRidesData.length > 0 ? (
+                <div className="space-y-4">
+                  {upcomingRidesData.slice(0, 3).map((ride) => (
+                    <div key={ride.tripId} className="flex items-center space-x-4 rounded-lg border p-4">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center space-x-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>{ride.pickupPoint.placeAddress} → {ride.destinationPoint.placeAddress}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{new Date(ride.rideStartTime).toLocaleString()}</span>
+                        </div>
+                        {ride.vehicleNumber && (
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                            <Car className="h-4 w-4" />
+                            <span>{ride.vehicleNumber}</span>
+                          </div>
+                        )}
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          ride.tripStatus === 'ALLOTTED' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {ride.tripStatus}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  <Link to="/my-rides">
+                    <Button variant="outline" className="w-full">
+                      View All Rides
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">
+                  No upcoming rides. <Link to="/find-rides" className="text-primary hover:underline">Find a ride</Link>
+                </p>
+              )}
             </CardContent>
           </Card>
+
           <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{vehiclesData.length}</p>
-                <p className="text-sm text-muted-foreground">Registered Vehicles</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">0</p>
-                <p className="text-sm text-muted-foreground">Completed Rides</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-orange-600">0</p>
-                <p className="text-sm text-muted-foreground">Created Trips</p>
-              </div>
+            <CardHeader>
+              <CardTitle>My Vehicles</CardTitle>
+              <CardDescription>Your registered vehicles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {vehiclesData.length > 0 ? (
+                <div className="space-y-4">
+                  {vehiclesData.slice(0, 3).map((vehicle) => (
+                    <div key={vehicle.value} className="flex items-center space-x-4 rounded-lg border p-4">
+                      <Car className="h-8 w-8 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{vehicle.text}</p>
+                        <p className="text-sm text-muted-foreground">{vehicle.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <Link to="/vehicles">
+                    <Button variant="outline" className="w-full">
+                      Manage Vehicles
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground mb-2">No vehicles registered</p>
+                  <Link to="/vehicles">
+                    <Button>Add Vehicle</Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

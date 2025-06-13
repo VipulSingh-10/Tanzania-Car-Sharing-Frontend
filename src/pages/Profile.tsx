@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import Layout from '@/components/Layout';
@@ -14,7 +14,6 @@ import { User, Mail, Phone, Building } from 'lucide-react';
 export default function Profile() {
   const { userId } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: userInfo, isLoading } = useQuery({
     queryKey: ['userInfo', userId],
@@ -80,6 +79,24 @@ export default function Profile() {
                     <span>{userData.organisationName || 'Not specified'}</span>
                   </div>
                 </div>
+                {userData.age && (
+                  <div>
+                    <Label>Age</Label>
+                    <div className="flex items-center space-x-2 p-2 border rounded">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{userData.age}</span>
+                    </div>
+                  </div>
+                )}
+                {userData.empId && (
+                  <div>
+                    <Label>Employee ID</Label>
+                    <div className="flex items-center space-x-2 p-2 border rounded">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{userData.empId}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

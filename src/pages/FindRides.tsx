@@ -1,103 +1,100 @@
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
+import { RideDTO, TripBasicInfoDTO } from '@/types/api';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Search, MapPin, Clock, Car, Users, DollarSign } from 'lucide-react';
-import { RideDTO, TripBasicInfoDTO } from '@/types/api';
+import { Search, MapPin, Clock, Users, Car } from 'lucide-react';
 
 export default function FindRides() {
   const { userId } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useState<RideDTO>({
-    sourceLocation: '',
-    destinationLocation: '',
-    departureTime: '',
-    seatsRequired: 1,
+    pickupPoint: {
+      latitude: 0,
+      longitude: 0,
+      placeAddress: ''
+    },
+    destinationPoint: {
+      latitude: 0,
+      longitude: 0,
+      placeAddress: ''
+    },
+    rideStartTime: new Date().toISOString(),
+    requestedSeats: 1
   });
-  const [availableRides, setAvailableRides] = useState<TripBasicInfoDTO[]>([]);
+  const [rides, setRides] = useState<TripBasicInfoDTO[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const searchMutation = useMutation({
-    mutationFn: (searchData: RideDTO) => apiService.findRides(userId!, searchData),
-    onSuccess: (response) => {
+  const handleSearch = async () => {
+    if (!userId) return;
+    
+    setIsSearching(true);
+    try {
+      const response = await apiService.findRides(userId, searchParams);
       if (response.success && response.responseContent) {
-        setAvailableRides(response.responseContent);
-        toast({
-          title: 'Search completed',
-          description: `Found ${response.responseContent.length} available rides`,
-        });
-      } else {
-        setAvailableRides([]);
-        toast({
-          title: 'No rides found',
-          description: response.errorMessage || 'No rides match your criteria',
-        });
-      }
-    },
-    onError: () => {
-      toast({
-        title: 'Search failed',
-        description: 'Failed to search for rides. Please try again.',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const joinMutation = useMutation({
-    mutationFn: (rideData: RideDTO) => apiService.joinTrip(userId!, rideData),
-    onSuccess: (response) => {
-      if (response.success && response.responseContent?.rideJoined) {
-        toast({
-          title: 'Ride joined successfully!',
-          description: 'You have joined the ride.',
-        });
-        queryClient.invalidateQueries({ queryKey: ['upcomingRides'] });
+        setRides(response.responseContent);
+        if (response.responseContent.length === 0) {
+          toast({
+            title: 'No rides found',
+            description: 'Try adjusting your search criteria.',
+          });
+        }
       } else {
         toast({
-          title: 'Failed to join ride',
-          description: response.responseContent?.errMsg || 'Could not join the ride',
+          title: 'Search failed',
+          description: response.errorMessage || 'Failed to find rides',
           variant: 'destructive',
         });
       }
-    },
-    onError: () => {
+    } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to join ride. Please try again.',
+        description: 'Failed to search for rides',
         variant: 'destructive',
       });
-    },
-  });
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchParams.sourceLocation || !searchParams.destinationLocation || !searchParams.departureTime) {
-      toast({
-        title: 'Missing information',
-        description: 'Please fill in all required fields',
-        variant: 'destructive',
-      });
-      return;
+    } finally {
+      setIsSearching(false);
     }
-    searchMutation.mutate(searchParams);
   };
 
-  const handleJoinRide = (trip: TripBasicInfoDTO) => {
-    const rideData: RideDTO = {
-      tripId: trip.tripId,
-      sourceLocation: searchParams.sourceLocation,
-      destinationLocation: searchParams.destinationLocation,
-      departureTime: searchParams.departureTime,
-      seatsRequired: searchParams.seatsRequired,
-    };
-    joinMutation.mutate(rideData);
+  const handleJoinRide = async (tripId: string) => {
+    if (!userId) return;
+
+    try {
+      const rideData: RideDTO = {
+        ...searchParams,
+        tripId
+      };
+      
+      const response = await apiService.joinTrip(userId, rideData);
+      if (response.success && response.responseContent?.rideJoined) {
+        toast({
+          title: 'Success!',
+          description: 'You have successfully joined the ride.',
+        });
+        // Refresh the search results
+        handleSearch();
+      } else {
+        toast({
+          title: 'Failed to join ride',
+          description: response.responseContent?.errMsg || response.errorMessage || 'Unknown error',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to join ride',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -105,128 +102,122 @@ export default function FindRides() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Find Rides</h1>
-          <p className="text-muted-foreground">Search for available rides that match your route</p>
+          <p className="text-muted-foreground">Search for available carpool rides</p>
         </div>
 
-        {/* Search Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Search className="h-5 w-5" />
-              <span>Search for Rides</span>
-            </CardTitle>
+            <CardTitle>Search Criteria</CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSearch} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="source">From</Label>
-                  <Input
-                    id="source"
-                    placeholder="Enter pickup location"
-                    value={searchParams.sourceLocation}
-                    onChange={(e) => setSearchParams({...searchParams, sourceLocation: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="destination">To</Label>
-                  <Input
-                    id="destination"
-                    placeholder="Enter destination"
-                    value={searchParams.destinationLocation}
-                    onChange={(e) => setSearchParams({...searchParams, destinationLocation: e.target.value})}
-                    required
-                  />
-                </div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="pickup">Pickup Location</Label>
+                <Input
+                  id="pickup"
+                  placeholder="Enter pickup address"
+                  value={searchParams.pickupPoint.placeAddress}
+                  onChange={(e) => setSearchParams({
+                    ...searchParams,
+                    pickupPoint: {
+                      ...searchParams.pickupPoint,
+                      placeAddress: e.target.value
+                    }
+                  })}
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="datetime">Departure Time</Label>
-                  <Input
-                    id="datetime"
-                    type="datetime-local"
-                    value={searchParams.departureTime}
-                    onChange={(e) => setSearchParams({...searchParams, departureTime: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="seats">Seats Required</Label>
-                  <Input
-                    id="seats"
-                    type="number"
-                    min="1"
-                    max="4"
-                    value={searchParams.seatsRequired}
-                    onChange={(e) => setSearchParams({...searchParams, seatsRequired: parseInt(e.target.value)})}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="destination">Destination</Label>
+                <Input
+                  id="destination"
+                  placeholder="Enter destination address"
+                  value={searchParams.destinationPoint.placeAddress}
+                  onChange={(e) => setSearchParams({
+                    ...searchParams,
+                    destinationPoint: {
+                      ...searchParams.destinationPoint,
+                      placeAddress: e.target.value
+                    }
+                  })}
+                />
               </div>
-              <Button type="submit" disabled={searchMutation.isPending} className="w-full">
-                {searchMutation.isPending ? 'Searching...' : 'Search Rides'}
-              </Button>
-            </form>
+              <div>
+                <Label htmlFor="datetime">Departure Time</Label>
+                <Input
+                  id="datetime"
+                  type="datetime-local"
+                  value={searchParams.rideStartTime.slice(0, 16)}
+                  onChange={(e) => setSearchParams({
+                    ...searchParams,
+                    rideStartTime: new Date(e.target.value).toISOString()
+                  })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="seats">Seats Required</Label>
+                <Input
+                  id="seats"
+                  type="number"
+                  min="1"
+                  max="4"
+                  value={searchParams.requestedSeats}
+                  onChange={(e) => setSearchParams({
+                    ...searchParams,
+                    requestedSeats: parseInt(e.target.value) || 1
+                  })}
+                />
+              </div>
+            </div>
+            <Button onClick={handleSearch} disabled={isSearching} className="w-full">
+              <Search className="h-4 w-4 mr-2" />
+              {isSearching ? 'Searching...' : 'Search Rides'}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Search Results */}
-        {availableRides.length > 0 && (
+        {rides.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Available Rides ({availableRides.length})</h2>
-            <div className="grid gap-4">
-              {availableRides.map((trip) => (
-                <Card key={trip.tripId}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-3 flex-1">
-                        <div className="flex items-center space-x-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{trip.sourceLocation}</span>
-                          <span className="text-muted-foreground">→</span>
-                          <span className="font-medium">{trip.destinationLocation}</span>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{new Date(trip.departureTime).toLocaleString()}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Car className="h-4 w-4" />
-                            <span>{trip.vehicleInfo}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>{trip.availableSeats} seats available</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-semibold">Driver: {trip.driverName}</span>
-                          {trip.estimatedFare && (
-                            <div className="flex items-center space-x-1">
-                              <DollarSign className="h-4 w-4" />
-                              <span className="font-medium">${trip.estimatedFare}</span>
-                            </div>
-                          )}
-                        </div>
-                        {trip.distance && trip.duration && (
-                          <div className="text-sm text-muted-foreground">
-                            {trip.distance} • {trip.duration}
-                          </div>
-                        )}
+            <h2 className="text-2xl font-semibold">Available Rides</h2>
+            {rides.map((ride) => (
+              <Card key={ride.tripId}>
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {ride.pickupPoint.placeAddress} → {ride.destinationPoint.placeAddress}
+                        </span>
                       </div>
-                      <Button 
-                        onClick={() => handleJoinRide(trip)}
-                        disabled={joinMutation.isPending}
-                        className="ml-4"
-                      >
-                        {joinMutation.isPending ? 'Joining...' : 'Join Ride'}
-                      </Button>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{new Date(ride.tripStartTime).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Car className="h-4 w-4" />
+                          <span>{ride.vehicleNumber}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm">
+                        <span className="font-medium">{ride.fullName}</span>
+                        <span>{ride.phoneNumber}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{ride.availableSeats} seats available</span>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <Button 
+                      onClick={() => handleJoinRide(ride.tripId)}
+                      disabled={ride.availableSeats < searchParams.requestedSeats}
+                    >
+                      Join Ride
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>

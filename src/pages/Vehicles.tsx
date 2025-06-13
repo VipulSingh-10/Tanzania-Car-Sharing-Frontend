@@ -3,28 +3,27 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
+import { VehicleRegisterRequestDTO } from '@/types/api';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Car, Plus, Users } from 'lucide-react';
-import { VehicleRegisterRequestDTO } from '@/types/api';
+import { Car, Plus } from 'lucide-react';
 
 export default function Vehicles() {
   const { userId } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [vehicleData, setVehicleData] = useState<VehicleRegisterRequestDTO>({
-    make: '',
-    model: '',
-    year: new Date().getFullYear(),
-    color: '',
-    licensePlate: '',
-    seatingCapacity: 4,
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newVehicle, setNewVehicle] = useState<VehicleRegisterRequestDTO>({
+    vehicleName: '',
+    vehicleNumber: '',
+    vehicleType: '',
+    vehicleColor: '',
+    seatingCapacity: ''
   });
 
   const { data: vehicles, isLoading } = useQuery({
@@ -33,28 +32,28 @@ export default function Vehicles() {
     enabled: !!userId,
   });
 
-  const registerMutation = useMutation({
-    mutationFn: (data: VehicleRegisterRequestDTO) => apiService.registerVehicle(userId!, data),
-    onSuccess: (response) => {
-      if (response.success) {
+  const addVehicleMutation = useMutation({
+    mutationFn: (vehicleData: VehicleRegisterRequestDTO) => 
+      apiService.registerVehicle(userId!, vehicleData),
+    onSuccess: (data) => {
+      if (data.success) {
         toast({
-          title: 'Vehicle registered successfully!',
-          description: 'Your vehicle has been added to your account.',
+          title: 'Vehicle added',
+          description: 'Your vehicle has been successfully registered.',
         });
-        setVehicleData({
-          make: '',
-          model: '',
-          year: new Date().getFullYear(),
-          color: '',
-          licensePlate: '',
-          seatingCapacity: 4,
+        queryClient.invalidateQueries({ queryKey: ['vehicles', userId] });
+        setShowAddForm(false);
+        setNewVehicle({
+          vehicleName: '',
+          vehicleNumber: '',
+          vehicleType: '',
+          vehicleColor: '',
+          seatingCapacity: ''
         });
-        setIsDialogOpen(false);
-        queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       } else {
         toast({
           title: 'Registration failed',
-          description: response.errorMessage || 'Could not register vehicle',
+          description: data.errorMessage || 'Failed to register vehicle',
           variant: 'destructive',
         });
       }
@@ -62,26 +61,24 @@ export default function Vehicles() {
     onError: () => {
       toast({
         title: 'Error',
-        description: 'Failed to register vehicle. Please try again.',
+        description: 'Failed to register vehicle',
         variant: 'destructive',
       });
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!vehicleData.make || !vehicleData.model || !vehicleData.licensePlate || !vehicleData.color) {
+  const handleAddVehicle = () => {
+    if (!newVehicle.vehicleName || !newVehicle.vehicleNumber || !newVehicle.vehicleType || !newVehicle.vehicleColor) {
       toast({
-        title: 'Missing information',
-        description: 'Please fill in all required fields',
+        title: 'Validation Error',
+        description: 'Please fill in all required fields.',
         variant: 'destructive',
       });
       return;
     }
-    registerMutation.mutate(vehicleData);
-  };
 
-  const vehiclesData = vehicles?.responseContent || [];
+    addVehicleMutation.mutate(newVehicle);
+  };
 
   return (
     <Layout>
@@ -91,157 +88,145 @@ export default function Vehicles() {
             <h1 className="text-3xl font-bold">My Vehicles</h1>
             <p className="text-muted-foreground">Manage your registered vehicles</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Vehicle
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Register New Vehicle</DialogTitle>
-                <DialogDescription>
-                  Add a new vehicle to your account to offer rides.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="make">Make *</Label>
-                    <Input
-                      id="make"
-                      placeholder="Toyota, Honda, etc."
-                      value={vehicleData.make}
-                      onChange={(e) => setVehicleData({...vehicleData, make: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="model">Model *</Label>
-                    <Input
-                      id="model"
-                      placeholder="Camry, Civic, etc."
-                      value={vehicleData.model}
-                      onChange={(e) => setVehicleData({...vehicleData, model: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="year">Year *</Label>
-                    <Input
-                      id="year"
-                      type="number"
-                      min="1900"
-                      max={new Date().getFullYear() + 1}
-                      value={vehicleData.year}
-                      onChange={(e) => setVehicleData({...vehicleData, year: parseInt(e.target.value)})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="color">Color *</Label>
-                    <Input
-                      id="color"
-                      placeholder="Red, Blue, etc."
-                      value={vehicleData.color}
-                      onChange={(e) => setVehicleData({...vehicleData, color: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="licensePlate">License Plate *</Label>
-                  <Input
-                    id="licensePlate"
-                    placeholder="ABC-1234"
-                    value={vehicleData.licensePlate}
-                    onChange={(e) => setVehicleData({...vehicleData, licensePlate: e.target.value.toUpperCase()})}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="seatingCapacity">Seating Capacity *</Label>
-                  <Input
-                    id="seatingCapacity"
-                    type="number"
-                    min="2"
-                    max="8"
-                    value={vehicleData.seatingCapacity}
-                    onChange={(e) => setVehicleData({...vehicleData, seatingCapacity: parseInt(e.target.value)})}
-                    required
-                  />
-                </div>
-                <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={registerMutation.isPending}
-                  >
-                    {registerMutation.isPending ? 'Registering...' : 'Register Vehicle'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setShowAddForm(!showAddForm)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Vehicle
+          </Button>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-8">Loading vehicles...</div>
-        ) : vehiclesData.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vehiclesData.map((vehicle) => (
-              <Card key={vehicle.vehicleId}>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Car className="h-5 w-5" />
-                    <span>{vehicle.make} {vehicle.model}</span>
-                  </CardTitle>
-                  <CardDescription>
-                    {vehicle.year} • {vehicle.color}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium">License Plate:</span>
-                      <span className="text-sm">{vehicle.licensePlate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium">Capacity:</span>
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-3 w-3" />
-                        <span className="text-sm">{vehicle.seatingCapacity} seats</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
+        {showAddForm && (
           <Card>
-            <CardContent className="p-8 text-center">
-              <Car className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No vehicles registered</h3>
-              <p className="text-muted-foreground mb-4">
-                Add your first vehicle to start offering rides to others.
-              </p>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Vehicle
-              </Button>
+            <CardHeader>
+              <CardTitle>Add New Vehicle</CardTitle>
+              <CardDescription>Register a new vehicle for carpooling</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="vehicleName">Vehicle Name *</Label>
+                  <Input
+                    id="vehicleName"
+                    placeholder="e.g., Honda Civic"
+                    value={newVehicle.vehicleName}
+                    onChange={(e) => setNewVehicle({
+                      ...newVehicle,
+                      vehicleName: e.target.value
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vehicleNumber">Vehicle Number *</Label>
+                  <Input
+                    id="vehicleNumber"
+                    placeholder="e.g., ABC-1234"
+                    value={newVehicle.vehicleNumber}
+                    onChange={(e) => setNewVehicle({
+                      ...newVehicle,
+                      vehicleNumber: e.target.value.toUpperCase()
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vehicleType">Vehicle Type *</Label>
+                  <Select 
+                    value={newVehicle.vehicleType} 
+                    onValueChange={(value) => setNewVehicle({
+                      ...newVehicle,
+                      vehicleType: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select vehicle type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HATCHBACK">Hatchback</SelectItem>
+                      <SelectItem value="SEDAN">Sedan</SelectItem>
+                      <SelectItem value="SUV">SUV</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="vehicleColor">Color *</Label>
+                  <Input
+                    id="vehicleColor"
+                    placeholder="e.g., Red"
+                    value={newVehicle.vehicleColor}
+                    onChange={(e) => setNewVehicle({
+                      ...newVehicle,
+                      vehicleColor: e.target.value
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="seatingCapacity">Seating Capacity</Label>
+                  <Input
+                    id="seatingCapacity"
+                    placeholder="e.g., 4"
+                    value={newVehicle.seatingCapacity}
+                    onChange={(e) => setNewVehicle({
+                      ...newVehicle,
+                      seatingCapacity: e.target.value
+                    })}
+                  />
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={handleAddVehicle}
+                  disabled={addVehicleMutation.isPending}
+                >
+                  {addVehicleMutation.isPending ? 'Adding...' : 'Add Vehicle'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
+
+        <div className="space-y-4">
+          <h2 className="text-2xl font-semibold">Registered Vehicles</h2>
+          {isLoading ? (
+            <div className="text-center py-8">Loading vehicles...</div>
+          ) : vehicles?.responseContent && vehicles.responseContent.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {vehicles.responseContent.map((vehicle) => (
+                <Card key={vehicle.value}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-primary/10 rounded-full">
+                        <Car className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{vehicle.text}</h3>
+                        <p className="text-sm text-muted-foreground">{vehicle.value}</p>
+                        {vehicle.seatingCapacity && (
+                          <p className="text-xs text-muted-foreground">
+                            Capacity: {vehicle.seatingCapacity} seats
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Car className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No vehicles registered yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Add your first vehicle to start offering rides.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </Layout>
   );

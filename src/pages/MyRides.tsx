@@ -3,54 +3,51 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
+import { RideBasicInfoDTO, CancelRideRequestDTO } from '@/types/api';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, MapPin, Clock, Car, X } from 'lucide-react';
-import { RideBasicInfoDTO } from '@/types/api';
+import { MapPin, Clock, Car, Users, X } from 'lucide-react';
 
 export default function MyRides() {
   const { userId } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [cancelReason, setCancelReason] = useState('');
-  const [selectedRide, setSelectedRide] = useState<RideBasicInfoDTO | null>(null);
 
-  const { data: upcomingRides, isLoading: upcomingLoading } = useQuery({
+  const { data: upcomingRides, isLoading: loadingUpcoming } = useQuery({
     queryKey: ['upcomingRides', userId],
     queryFn: () => apiService.getUpcomingRides(userId!),
     enabled: !!userId,
   });
 
-  const { data: historyRides, isLoading: historyLoading } = useQuery({
+  const { data: historyRides, isLoading: loadingHistory } = useQuery({
     queryKey: ['historyRides', userId],
     queryFn: () => apiService.getHistoryRides(userId!),
     enabled: !!userId,
   });
 
-  const cancelMutation = useMutation({
-    mutationFn: ({ rideId, reason }: { rideId: string; reason?: string }) => 
-      apiService.cancelRide(userId!, { rideId, reason }),
-    onSuccess: (response) => {
-      if (response.success && response.responseContent?.rideCancelled) {
+  const cancelRideMutation = useMutation({
+    mutationFn: ({ tripId, reason }: { tripId: string; reason?: string }) => {
+      const cancelData: CancelRideRequestDTO = {
+        tripId,
+        cancellationReason: reason
+      };
+      return apiService.cancelRide(userId!, cancelData);
+    },
+    onSuccess: (data) => {
+      if (data.success && data.responseContent?.rideCancelled) {
         toast({
           title: 'Ride cancelled',
-          description: 'Your ride has been cancelled successfully.',
+          description: 'Your ride has been successfully cancelled.',
         });
-        queryClient.invalidateQueries({ queryKey: ['upcomingRides'] });
-        queryClient.invalidateQueries({ queryKey: ['historyRides'] });
-        setSelectedRide(null);
-        setCancelReason('');
+        queryClient.invalidateQueries({ queryKey: ['upcomingRides', userId] });
+        queryClient.invalidateQueries({ queryKey: ['historyRides', userId] });
       } else {
         toast({
           title: 'Cancellation failed',
-          description: response.responseContent?.errMsg || 'Could not cancel the ride',
+          description: data.responseContent?.errMsg || data.errorMessage || 'Failed to cancel ride',
           variant: 'destructive',
         });
       }
@@ -58,195 +55,119 @@ export default function MyRides() {
     onError: () => {
       toast({
         title: 'Error',
-        description: 'Failed to cancel ride. Please try again.',
+        description: 'Failed to cancel ride',
         variant: 'destructive',
       });
     },
   });
 
-  const handleCancelRide = () => {
-    if (selectedRide) {
-      cancelMutation.mutate({
-        rideId: selectedRide.rideId,
-        reason: cancelReason.trim() || undefined,
-      });
+  const handleCancelRide = async (tripId: string) => {
+    if (window.confirm('Are you sure you want to cancel this ride?')) {
+      cancelRideMutation.mutate({ tripId });
     }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('confirmed') || statusLower.includes('booked')) {
-      return <Badge className="bg-green-100 text-green-800">Confirmed</Badge>;
-    }
-    if (statusLower.includes('pending')) {
-      return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-    }
-    if (statusLower.includes('cancelled')) {
-      return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
-    }
-    if (statusLower.includes('completed')) {
-      return <Badge className="bg-blue-100 text-blue-800">Completed</Badge>;
-    }
-    return <Badge variant="outline">{status}</Badge>;
   };
 
   const RideCard = ({ ride, showCancelButton = false }: { ride: RideBasicInfoDTO; showCancelButton?: boolean }) => (
     <Card>
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
-          <div className="space-y-3 flex-1">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{ride.sourceLocation}</span>
-                <span className="text-muted-foreground">→</span>
-                <span className="font-medium">{ride.destinationLocation}</span>
-              </div>
-              {getStatusBadge(ride.status)}
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                {ride.pickupPoint.placeAddress} → {ride.destinationPoint.placeAddress}
+              </span>
             </div>
-            
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center space-x-1">
                 <Clock className="h-4 w-4" />
-                <span>{new Date(ride.departureTime).toLocaleString()}</span>
+                <span>{new Date(ride.rideStartTime).toLocaleString()}</span>
               </div>
-              {ride.vehicleInfo && (
+              {ride.vehicleNumber && (
                 <div className="flex items-center space-x-1">
                   <Car className="h-4 w-4" />
-                  <span>{ride.vehicleInfo}</span>
+                  <span>{ride.vehicleNumber}</span>
                 </div>
               )}
             </div>
-            
-            {ride.driverName && (
-              <div className="text-sm">
-                <span className="font-medium">Driver:</span> {ride.driverName}
+            {ride.seats && (
+              <div className="flex items-center space-x-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">{ride.seats}</span>
               </div>
             )}
-            
-            {ride.seatsBooked && (
-              <div className="text-sm">
-                <span className="font-medium">Seats booked:</span> {ride.seatsBooked}
-              </div>
-            )}
+            <div className="inline-block">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                ride.tripStatus === 'ALLOTTED' ? 'bg-green-100 text-green-800' :
+                ride.tripStatus === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                ride.tripStatus === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {ride.tripStatus}
+              </span>
+            </div>
           </div>
-          
-          {showCancelButton && ride.status.toLowerCase() !== 'cancelled' && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setSelectedRide(ride)}
-                  className="ml-4"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Cancel
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Cancel Ride</DialogTitle>
-                  <DialogDescription>
-                    Are you sure you want to cancel this ride? This action cannot be undone.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reason">Reason for cancellation (optional)</Label>
-                    <Textarea
-                      id="reason"
-                      placeholder="Please provide a reason for cancelling..."
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setSelectedRide(null);
-                      setCancelReason('');
-                    }}
-                  >
-                    Keep Ride
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleCancelRide}
-                    disabled={cancelMutation.isPending}
-                  >
-                    {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Ride'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+          {showCancelButton && ride.tripStatus === 'ALLOTTED' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleCancelRide(ride.tripId)}
+              disabled={cancelRideMutation.isPending}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </Button>
           )}
         </div>
       </CardContent>
     </Card>
   );
 
-  const upcomingRidesData = upcomingRides?.responseContent || [];
-  const historyRidesData = historyRides?.responseContent || [];
-
   return (
     <Layout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">My Rides</h1>
-          <p className="text-muted-foreground">Manage your upcoming and past rides</p>
+          <p className="text-muted-foreground">Manage your ride bookings</p>
         </div>
 
         <Tabs defaultValue="upcoming" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="upcoming" className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" />
-              <span>Upcoming ({upcomingRidesData.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center space-x-2">
-              <Clock className="h-4 w-4" />
-              <span>History ({historyRidesData.length})</span>
-            </TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming Rides</TabsTrigger>
+            <TabsTrigger value="history">Ride History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upcoming" className="space-y-4">
-            {upcomingLoading ? (
+            {loadingUpcoming ? (
               <div className="text-center py-8">Loading upcoming rides...</div>
-            ) : upcomingRidesData.length > 0 ? (
+            ) : upcomingRides?.responseContent && upcomingRides.responseContent.length > 0 ? (
               <div className="space-y-4">
-                {upcomingRidesData.map((ride) => (
-                  <RideCard key={ride.rideId} ride={ride} showCancelButton={true} />
+                {upcomingRides.responseContent.map((ride) => (
+                  <RideCard key={ride.tripId} ride={ride} showCancelButton={true} />
                 ))}
               </div>
             ) : (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No upcoming rides</h3>
-                  <p className="text-muted-foreground">You don't have any upcoming rides scheduled.</p>
+                  <p className="text-muted-foreground">No upcoming rides found.</p>
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
-            {historyLoading ? (
+            {loadingHistory ? (
               <div className="text-center py-8">Loading ride history...</div>
-            ) : historyRidesData.length > 0 ? (
+            ) : historyRides?.responseContent && historyRides.responseContent.length > 0 ? (
               <div className="space-y-4">
-                {historyRidesData.map((ride) => (
-                  <RideCard key={ride.rideId} ride={ride} />
+                {historyRides.responseContent.map((ride) => (
+                  <RideCard key={ride.tripId} ride={ride} />
                 ))}
               </div>
             ) : (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No ride history</h3>
-                  <p className="text-muted-foreground">Your completed and cancelled rides will appear here.</p>
+                  <p className="text-muted-foreground">No ride history found.</p>
                 </CardContent>
               </Card>
             )}
