@@ -45,14 +45,20 @@ class ApiService {
   async login(loginData: LoginRequestDTO): Promise<ResponseDTO<LoginResponseDTO>> {
     return this.makeRequest('/users/login', {
       method: 'POST',
-      body: JSON.stringify({ requestContent: loginData }),
+      body: JSON.stringify({ 
+        userId: loginData.emailId,
+        requestContent: loginData 
+      }),
     });
   }
 
   async signup(userData: UserInfoDTO): Promise<ResponseDTO<SignUpResponseDTO>> {
     return this.makeRequest('/users/signup', {
       method: 'POST',
-      body: JSON.stringify({ requestContent: userData }),
+      body: JSON.stringify({ 
+        userId: userData.emailId,
+        requestContent: userData 
+      }),
     });
   }
 

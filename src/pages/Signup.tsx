@@ -10,21 +10,22 @@ import { Car } from 'lucide-react';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
+    fullName: '',
+    emailId: '',
     phoneNumber: '',
-    department: '',
-    designation: '',
+    password: '',
+    age: 0,
+    organisationName: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: name === 'age' ? parseInt(value) || 0 : value,
     });
   };
 
@@ -44,7 +45,7 @@ export default function Signup() {
       } else {
         toast({
           title: 'Signup failed',
-          description: response.responseContent?.errMsg || response.errorMessage || 'Failed to create account',
+          description: response.errorMessage || 'Failed to create account',
           variant: 'destructive',
         });
       }
@@ -73,46 +74,45 @@ export default function Signup() {
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                name="firstName"
-                type="text"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                className="mt-1"
-                placeholder="First name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                name="lastName"
-                type="text"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                className="mt-1"
-                placeholder="Last name"
-              />
-            </div>
+          <div>
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input
+              id="fullName"
+              name="fullName"
+              type="text"
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+              className="mt-1"
+              placeholder="Enter your full name"
+            />
           </div>
 
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="emailId">Email</Label>
             <Input
-              id="email"
-              name="email"
+              id="emailId"
+              name="emailId"
               type="email"
-              value={formData.email}
+              value={formData.emailId}
               onChange={handleChange}
               required
               className="mt-1"
               placeholder="Enter your email"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="mt-1"
+              placeholder="Enter your password"
             />
           </div>
 
@@ -131,28 +131,29 @@ export default function Signup() {
           </div>
 
           <div>
-            <Label htmlFor="department">Department</Label>
+            <Label htmlFor="age">Age</Label>
             <Input
-              id="department"
-              name="department"
-              type="text"
-              value={formData.department}
+              id="age"
+              name="age"
+              type="number"
+              value={formData.age || ''}
               onChange={handleChange}
               className="mt-1"
-              placeholder="Your department (optional)"
+              placeholder="Enter your age"
+              min="1"
             />
           </div>
 
           <div>
-            <Label htmlFor="designation">Designation</Label>
+            <Label htmlFor="organisationName">Organization (Optional)</Label>
             <Input
-              id="designation"
-              name="designation"
+              id="organisationName"
+              name="organisationName"
               type="text"
-              value={formData.designation}
+              value={formData.organisationName}
               onChange={handleChange}
               className="mt-1"
-              placeholder="Your designation (optional)"
+              placeholder="Your organization"
             />
           </div>
 

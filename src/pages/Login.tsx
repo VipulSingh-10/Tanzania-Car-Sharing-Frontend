@@ -25,21 +25,22 @@ export default function Login() {
       const response = await apiService.login({ emailId, password });
       
       if (response.success && response.responseContent?.loginSuccess) {
-        const userInfo = {
-          fullName: response.responseContent.username || '',
-          emailId: emailId,
-          phoneNumber: '',
-        };
+        // Get user info after successful login
+        const userInfoResponse = await apiService.getUserInfo(response.responseContent.userId!);
         
-        login(
-          response.responseContent.userId!,
-          userInfo
-        );
-        navigate('/dashboard');
-        toast({
-          title: 'Welcome back!',
-          description: 'You have successfully logged in.',
-        });
+        if (userInfoResponse.success && userInfoResponse.responseContent) {
+          login(
+            response.responseContent.userId!,
+            userInfoResponse.responseContent
+          );
+          navigate('/dashboard');
+          toast({
+            title: 'Welcome back!',
+            description: 'You have successfully logged in.',
+          });
+        } else {
+          throw new Error('Failed to get user information');
+        }
       } else {
         toast({
           title: 'Login failed',

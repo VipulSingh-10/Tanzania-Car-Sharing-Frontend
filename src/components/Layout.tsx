@@ -20,7 +20,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { user, logout } = useAuth();
+  const { userInfo, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -96,12 +96,12 @@ export default function Layout({ children }: LayoutProps) {
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <span className="text-primary-foreground text-sm font-medium">
-                    {user?.firstName?.charAt(0)}
+                    {userInfo?.fullName?.charAt(0) || 'U'}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="text-sm font-medium">{userInfo?.fullName || 'User'}</p>
+                  <p className="text-xs text-muted-foreground">{userInfo?.emailId || ''}</p>
                 </div>
               </div>
               <Button 

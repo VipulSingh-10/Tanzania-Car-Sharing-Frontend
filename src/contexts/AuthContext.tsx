@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { UserInfoDTO } from '@/types/api';
 
 interface AuthContextType {
-  user: UserInfoDTO | null;
+  userInfo: UserInfoDTO | null;
   userId: string | null;
   isAuthenticated: boolean;
   login: (userId: string, userInfo: UserInfoDTO) => void;
@@ -25,7 +25,7 @@ interface AuthProviderProps {
 }
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<UserInfoDTO | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfoDTO | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,26 +35,26 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     
     if (storedUserId && storedUser) {
       setUserId(storedUserId);
-      setUser(JSON.parse(storedUser));
+      setUserInfo(JSON.parse(storedUser));
     }
   }, []);
 
-  const login = (newUserId: string, userInfo: UserInfoDTO) => {
+  const login = (newUserId: string, userData: UserInfoDTO) => {
     setUserId(newUserId);
-    setUser(userInfo);
+    setUserInfo(userData);
     localStorage.setItem('carpoolUserId', newUserId);
-    localStorage.setItem('carpoolUser', JSON.stringify(userInfo));
+    localStorage.setItem('carpoolUser', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUserId(null);
-    setUser(null);
+    setUserInfo(null);
     localStorage.removeItem('carpoolUserId');
     localStorage.removeItem('carpoolUser');
   };
 
   const value = {
-    user,
+    userInfo,
     userId,
     isAuthenticated: !!userId,
     login,
