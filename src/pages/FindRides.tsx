@@ -100,26 +100,27 @@ export default function FindRides() {
   };
 
   const handlePickupChange = (address: string, lat?: number, lng?: number) => {
-    setSearchParams({
-      ...searchParams,
+    setSearchParams(prevParams => ({
+      ...prevParams,
       pickupPoint: {
         latitude: lat || 0,
         longitude: lng || 0,
         placeAddress: address,
       }
-    });
+    }));
   };
 
   const handleDestinationChange = (address: string, lat?: number, lng?: number) => {
-    setSearchParams({
-      ...searchParams,
+    setSearchParams(prevParams => ({
+      ...prevParams,
       destinationPoint: {
         latitude: lat || 0,
         longitude: lng || 0,
         placeAddress: address,
       }
-    });
+    }));
   };
+
 
   // Prepare map markers for found rides
   const mapMarkers = rides.map(ride => ({
@@ -143,21 +144,21 @@ export default function FindRides() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="pickup">Pickup Location</Label>
+                <Label htmlFor="pickup-location">Pickup Location</Label>
                 <PlacesAutocomplete
-                  id="pickup"
-                  placeholder="Enter pickup address"
-                  value={searchParams.pickupPoint.placeAddress}
-                  onChange={handlePickupChange}
+                    id="pickup-location"
+                    value={searchParams.pickupPoint.placeAddress}
+                    onChange={handlePickupChange}
+                    placeholder="Enter pickup location"
                 />
               </div>
               <div>
-                <Label htmlFor="destination">Destination</Label>
+                <Label htmlFor="destination-location">Destination</Label>
                 <PlacesAutocomplete
-                  id="destination"
-                  placeholder="Enter destination address"
-                  value={searchParams.destinationPoint.placeAddress}
-                  onChange={handleDestinationChange}
+                    id="destination-location"
+                    value={searchParams.destinationPoint.placeAddress}
+                    onChange={handleDestinationChange}
+                    placeholder="Enter destination"
                 />
               </div>
               <div>

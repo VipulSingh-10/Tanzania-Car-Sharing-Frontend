@@ -101,25 +101,25 @@ export default function CreateTrip() {
   };
 
   const handlePickupChange = (address: string, lat?: number, lng?: number) => {
-    setTripData({
-      ...tripData,
+    setTripData(prevData => ({
+      ...prevData,
       pickupPoint: {
         latitude: lat || 0,
         longitude: lng || 0,
         placeAddress: address,
       }
-    });
+    }));
   };
 
   const handleDestinationChange = (address: string, lat?: number, lng?: number) => {
-    setTripData({
-      ...tripData,
+    setTripData(prevData => ({
+      ...prevData,
       destinationPoint: {
         latitude: lat || 0,
         longitude: lng || 0,
         placeAddress: address,
       }
-    });
+    }));
   };
 
   const vehiclesData = vehicles?.responseContent || [];
@@ -128,18 +128,26 @@ export default function CreateTrip() {
   const mapMarkers = [];
   if (tripData.pickupPoint.latitude && tripData.pickupPoint.longitude) {
     mapMarkers.push({
-      position: { lat: tripData.pickupPoint.latitude, lng: tripData.pickupPoint.longitude },
-      title: 'Pickup Point',
-      info: tripData.pickupPoint.placeAddress,
+      position: {
+        lat: tripData.pickupPoint.latitude,
+        lng: tripData.pickupPoint.longitude
+      },
+      title: 'Pickup',
+      info: tripData.pickupPoint.placeAddress
     });
   }
+
   if (tripData.destinationPoint.latitude && tripData.destinationPoint.longitude) {
     mapMarkers.push({
-      position: { lat: tripData.destinationPoint.latitude, lng: tripData.destinationPoint.longitude },
+      position: {
+        lat: tripData.destinationPoint.latitude,
+        lng: tripData.destinationPoint.longitude
+      },
       title: 'Destination',
-      info: tripData.destinationPoint.placeAddress,
+      info: tripData.destinationPoint.placeAddress
     });
   }
+
 
   return (
     <Layout>
@@ -163,23 +171,23 @@ export default function CreateTrip() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="pickup">Pickup Location *</Label>
+                  <Label htmlFor="create-pickup-location">Pickup Location</Label>
                   <PlacesAutocomplete
-                    id="pickup"
-                    placeholder="Enter pickup location"
-                    value={tripData.pickupPoint.placeAddress}
-                    onChange={handlePickupChange}
-                    required
+                      id="create-pickup-location"
+                      value={tripData.pickupPoint.placeAddress}
+                      onChange={handlePickupChange}
+                      placeholder="Enter pickup location"
+                      required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="destination">Destination *</Label>
+                  <Label htmlFor="create-destination-location">Destination</Label>
                   <PlacesAutocomplete
-                    id="destination"
-                    placeholder="Enter destination"
-                    value={tripData.destinationPoint.placeAddress}
-                    onChange={handleDestinationChange}
-                    required
+                      id="create-destination-location"
+                      value={tripData.destinationPoint.placeAddress}
+                      onChange={handleDestinationChange}
+                      placeholder="Enter destination"
+                      required
                   />
                 </div>
               </div>
@@ -223,6 +231,7 @@ export default function CreateTrip() {
               <div>
                 <Label htmlFor="vehicle">Select Vehicle *</Label>
                 <Select
+
                   value={tripData.vehicleNumber}
                   onValueChange={(value) => setTripData({...tripData, vehicleNumber: value})}
                   required

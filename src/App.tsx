@@ -12,6 +12,7 @@ import CreateTrip from './pages/CreateTrip';
 import MyRides from './pages/MyRides';
 import Vehicles from './pages/Vehicles';
 import Profile from './pages/Profile';
+import TestMapPage from './pages/TestMapPage';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ function App() {
         <Router>
           <div className="min-h-screen bg-background">
             <Routes>
+              <Route path="/test-map" element={<TestMapPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
