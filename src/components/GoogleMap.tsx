@@ -12,6 +12,12 @@ interface GoogleMapProps {
   className?: string;
 }
 
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
 export default function GoogleMap({ 
   center = { lat: 28.6139, lng: 77.2090 }, // Default to Delhi
   zoom = 10,
@@ -43,7 +49,7 @@ export default function GoogleMap({
 
     const createMap = () => {
       if (mapRef.current && !mapInstanceRef.current) {
-        mapInstanceRef.current = new google.maps.Map(mapRef.current, {
+        mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
           center,
           zoom,
           mapTypeControl: false,
@@ -64,14 +70,14 @@ export default function GoogleMap({
 
       // Add new markers
       markers.forEach(markerData => {
-        const marker = new google.maps.Marker({
+        const marker = new window.google.maps.Marker({
           position: markerData.position,
           map: mapInstanceRef.current,
           title: markerData.title,
         });
 
         if (markerData.info) {
-          const infoWindow = new google.maps.InfoWindow({
+          const infoWindow = new window.google.maps.InfoWindow({
             content: markerData.info,
           });
 
@@ -85,7 +91,7 @@ export default function GoogleMap({
 
       // Adjust map bounds if there are markers
       if (markers.length > 0) {
-        const bounds = new google.maps.LatLngBounds();
+        const bounds = new window.google.maps.LatLngBounds();
         markers.forEach(marker => bounds.extend(marker.position));
         mapInstanceRef.current.fitBounds(bounds);
       }

@@ -12,6 +12,12 @@ interface PlacesAutocompleteProps {
   required?: boolean;
 }
 
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
 export default function PlacesAutocomplete({
   value,
   onChange,
@@ -51,7 +57,7 @@ export default function PlacesAutocomplete({
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
       // Initialize autocomplete
-      autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
         types: ['establishment', 'geocode'],
         componentRestrictions: { country: 'in' } // Restrict to India, change as needed
       });
@@ -69,7 +75,7 @@ export default function PlacesAutocomplete({
 
     return () => {
       if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
   }, [isLoaded, onChange]);
