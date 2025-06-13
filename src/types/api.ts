@@ -17,80 +17,92 @@ export interface RequestDTO<T> {
   requestContent: T;
 }
 
+// Points/Location Type
+export interface Points {
+  latitude: number;
+  longitude: number;
+  placeId?: string;
+  placeAddress?: string;
+}
+
 // User Types
 export interface UserInfoDTO {
+  fullName: string;
+  emailId: string;
   userId?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
   phoneNumber: string;
-  department?: string;
-  designation?: string;
+  password?: string;
+  age?: number;
+  dob?: string;
+  empId?: string;
+  organisationName?: string;
+  profilePicUrl?: string;
+  userCars?: Vehicles[];
 }
 
 export interface LoginRequestDTO {
-  email: string;
+  emailId: string;
   password: string;
 }
 
 export interface LoginResponseDTO {
-  loginSuccess: boolean;
+  username?: string;
   userId?: string;
-  userInfo?: UserInfoDTO;
+  loginSuccess: boolean;
   errMsg?: string;
 }
 
 export interface SignUpResponseDTO {
-  signUpSuccess: boolean;
   userId?: string;
-  errMsg?: string;
+  username?: string;
+  signUpSuccess: boolean;
 }
 
 // Ride Types
 export interface RideDTO {
+  userId?: string;
   tripId?: string;
-  sourceLocation: string;
-  destinationLocation: string;
-  departureTime: string;
-  seatsRequired?: number;
-  vehicleId?: string;
-  notes?: string;
+  pickupPoint: Points;
+  destinationPoint: Points;
+  rideStartTime: string;
+  requestedSeats: number;
+  tripStatus?: string;
+  rideStatus?: string;
 }
 
 export interface TripBasicInfoDTO {
+  userId: string;
   tripId: string;
-  driverName: string;
-  sourceLocation: string;
-  destinationLocation: string;
-  departureTime: string;
+  profilePic?: string;
+  fullName: string;
+  vehicleNumber: string;
+  pickupPoint: Points;
+  destinationPoint: Points;
+  tripStartTime: string;
   availableSeats: number;
-  vehicleInfo: string;
-  estimatedFare?: number;
-  distance?: string;
-  duration?: string;
+  phoneNumber: string;
+  requestedSeats: number;
 }
 
 export interface RideBasicInfoDTO {
-  rideId: string;
+  userId: string;
   tripId: string;
-  sourceLocation: string;
-  destinationLocation: string;
-  departureTime: string;
-  status: string;
-  driverName?: string;
-  vehicleInfo?: string;
-  seatsBooked?: number;
+  pickupPoint: Points;
+  destinationPoint: Points;
+  rideStartTime: string;
+  seats: string;
+  tripStatus: string;
+  vehicleNumber: string;
 }
 
 export interface JoinRideResponseDTO {
   rideJoined: boolean;
-  rideId?: string;
   errMsg?: string;
 }
 
 export interface CancelRideRequestDTO {
-  rideId: string;
-  reason?: string;
+  tripId: string;
+  cancellationReason?: string;
 }
 
 export interface CancelRideResponseDTO {
@@ -100,37 +112,42 @@ export interface CancelRideResponseDTO {
 
 // Trip Creation Types
 export interface OfferRideDTO {
-  sourceLocation: string;
-  destinationLocation: string;
-  departureTime: string;
-  availableSeats: number;
-  vehicleId: string;
-  estimatedFare?: number;
-  notes?: string;
+  vehicleNumber: string;
+  pickupPoint: Points;
+  destinationPoint: Points;
+  tripStartTime: string;
+  offeredSeats: number;
 }
 
 export interface CreateTripResponseDTO {
-  tripCreated: boolean;
   tripId?: string;
+  vehicleNumber?: string;
+  pickupPoint?: Points;
+  destinationPoint?: Points;
+  tripStartTime?: string;
+  tripCreated: boolean;
   errMsg?: string;
 }
 
 // Vehicle Types
+export interface Vehicles {
+  userId: string;
+  vehicleNumber: string;
+  vehicleType: string;
+  vehicleName?: string;
+  vehicleColor?: string;
+}
+
 export interface VehicleResponseDTO {
-  vehicleId: string;
-  make: string;
-  model: string;
-  year: number;
-  color: string;
-  licensePlate: string;
-  seatingCapacity: number;
+  value: string; // vehicle number
+  text: string; // vehicle name + color
+  seatingCapacity?: string;
 }
 
 export interface VehicleRegisterRequestDTO {
-  make: string;
-  model: string;
-  year: number;
-  color: string;
-  licensePlate: string;
-  seatingCapacity: number;
+  vehicleName: string;
+  vehicleNumber: string;
+  vehicleType: string;
+  vehicleColor: string;
+  seatingCapacity?: string;
 }

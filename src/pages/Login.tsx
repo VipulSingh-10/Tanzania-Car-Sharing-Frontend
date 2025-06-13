@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Car } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [emailId, setEmailId] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -22,12 +22,18 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await apiService.login({ email, password });
+      const response = await apiService.login({ emailId, password });
       
       if (response.success && response.responseContent?.loginSuccess) {
+        const userInfo = {
+          fullName: response.responseContent.username || '',
+          emailId: emailId,
+          phoneNumber: '',
+        };
+        
         login(
           response.responseContent.userId!,
-          response.responseContent.userInfo!
+          userInfo
         );
         navigate('/dashboard');
         toast({
@@ -67,12 +73,12 @@ export default function Login() {
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="emailId">Email address</Label>
             <Input
-              id="email"
+              id="emailId"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={emailId}
+              onChange={(e) => setEmailId(e.target.value)}
               required
               className="mt-1"
               placeholder="Enter your email"

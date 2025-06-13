@@ -7,7 +7,6 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -19,13 +18,19 @@ export default function CreateTrip() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tripData, setTripData] = useState<OfferRideDTO>({
-    sourceLocation: '',
-    destinationLocation: '',
-    departureTime: '',
-    availableSeats: 1,
-    vehicleId: '',
-    estimatedFare: 0,
-    notes: '',
+    vehicleNumber: '',
+    pickupPoint: {
+      latitude: 0,
+      longitude: 0,
+      placeAddress: '',
+    },
+    destinationPoint: {
+      latitude: 0,
+      longitude: 0,
+      placeAddress: '',
+    },
+    tripStartTime: '',
+    offeredSeats: 1,
   });
 
   const { data: vehicles } = useQuery({
@@ -43,13 +48,19 @@ export default function CreateTrip() {
           description: 'Your trip has been posted and is now available for others to join.',
         });
         setTripData({
-          sourceLocation: '',
-          destinationLocation: '',
-          departureTime: '',
-          availableSeats: 1,
-          vehicleId: '',
-          estimatedFare: 0,
-          notes: '',
+          vehicleNumber: '',
+          pickupPoint: {
+            latitude: 0,
+            longitude: 0,
+            placeAddress: '',
+          },
+          destinationPoint: {
+            latitude: 0,
+            longitude: 0,
+            placeAddress: '',
+          },
+          tripStartTime: '',
+          offeredSeats: 1,
         });
         queryClient.invalidateQueries({ queryKey: ['upcomingRides'] });
       } else {
@@ -71,7 +82,7 @@ export default function CreateTrip() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tripData.sourceLocation || !tripData.destinationLocation || !tripData.departureTime || !tripData.vehicleId) {
+    if (!tripData.pickupPoint.placeAddress || !tripData.destinationPoint.placeAddress || !tripData.tripStartTime || !tripData.vehicleNumber) {
       toast({
         title: 'Missing information',
         description: 'Please fill in all required fields',
@@ -79,7 +90,13 @@ export default function CreateTrip() {
       });
       return;
     }
-    createTripMutation.mutate(tripData);
+    
+    // Convert datetime-local to ISO string
+    const tripStartTime = new Date(tripData.tripStartTime).toISOString();
+    createTripMutation.mutate({
+      ...tripData,
+      tripStartTime,
+    });
   };
 
   const vehiclesData = vehicles?.responseContent || [];
@@ -106,59 +123,54 @@ export default function CreateTrip() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="source">From *</Label>
+                  <Label htmlFor="pickup">Pickup Location *</Label>
                   <Input
-                    id="source"
+                    id="pickup"
                     placeholder="Enter pickup location"
-                    value={tripData.sourceLocation}
-                    onChange={(e) => setTripData({...tripData, sourceLocation: e.target.value})}
+                    value={tripData.pickupPoint.placeAddress}
+                    onChange={(e) => setTripData({
+                      ...tripData, 
+                      pickupPoint: { ...tripData.pickupPoint, placeAddress: e.target.value }
+                    })}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="destination">To *</Label>
+                  <Label htmlFor="destination">Destination *</Label>
                   <Input
                     id="destination"
                     placeholder="Enter destination"
-                    value={tripData.destinationLocation}
-                    onChange={(e) => setTripData({...tripData, destinationLocation: e.target.value})}
+                    value={tripData.destinationPoint.placeAddress}
+                    onChange={(e) => setTripData({
+                      ...tripData, 
+                      destinationPoint: { ...tripData.destinationPoint, placeAddress: e.target.value }
+                    })}
                     required
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="datetime">Departure Time *</Label>
+                  <Label htmlFor="datetime">Trip Start Time *</Label>
                   <Input
                     id="datetime"
                     type="datetime-local"
-                    value={tripData.departureTime}
-                    onChange={(e) => setTripData({...tripData, departureTime: e.target.value})}
+                    value={tripData.tripStartTime}
+                    onChange={(e) => setTripData({...tripData, tripStartTime: e.target.value})}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="seats">Available Seats *</Label>
+                  <Label htmlFor="seats">Offered Seats *</Label>
                   <Input
                     id="seats"
                     type="number"
                     min="1"
                     max="8"
-                    value={tripData.availableSeats}
-                    onChange={(e) => setTripData({...tripData, availableSeats: parseInt(e.target.value)})}
+                    value={tripData.offeredSeats}
+                    onChange={(e) => setTripData({...tripData, offeredSeats: parseInt(e.target.value)})}
                     required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fare">Estimated Fare ($)</Label>
-                  <Input
-                    id="fare"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={tripData.estimatedFare}
-                    onChange={(e) => setTripData({...tripData, estimatedFare: parseFloat(e.target.value)})}
                   />
                 </div>
               </div>
@@ -166,8 +178,8 @@ export default function CreateTrip() {
               <div>
                 <Label htmlFor="vehicle">Select Vehicle *</Label>
                 <Select
-                  value={tripData.vehicleId}
-                  onValueChange={(value) => setTripData({...tripData, vehicleId: value})}
+                  value={tripData.vehicleNumber}
+                  onValueChange={(value) => setTripData({...tripData, vehicleNumber: value})}
                   required
                 >
                   <SelectTrigger>
@@ -175,10 +187,10 @@ export default function CreateTrip() {
                   </SelectTrigger>
                   <SelectContent>
                     {vehiclesData.map((vehicle) => (
-                      <SelectItem key={vehicle.vehicleId} value={vehicle.vehicleId}>
+                      <SelectItem key={vehicle.value} value={vehicle.value}>
                         <div className="flex items-center space-x-2">
                           <Car className="h-4 w-4" />
-                          <span>{vehicle.make} {vehicle.model} ({vehicle.licensePlate})</span>
+                          <span>{vehicle.text} ({vehicle.value})</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -189,17 +201,6 @@ export default function CreateTrip() {
                     No vehicles found. Please add a vehicle first.
                   </p>
                 )}
-              </div>
-
-              <div>
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Any additional information for passengers..."
-                  value={tripData.notes}
-                  onChange={(e) => setTripData({...tripData, notes: e.target.value})}
-                  rows={3}
-                />
               </div>
 
               <Button 
