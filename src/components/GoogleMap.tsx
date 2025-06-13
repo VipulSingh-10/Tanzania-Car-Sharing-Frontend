@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface GoogleMapProps {
   center?: { lat: number; lng: number };
@@ -27,28 +27,58 @@ export default function GoogleMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const initializeMap = async () => {
-      // Check if Google Maps is already loaded
-      if (!window.google || !window.google.maps) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
-        script.async = true;
-        script.defer = true;
-        
-        script.onload = () => {
-          createMap();
-        };
-        
-        document.head.appendChild(script);
-      } else {
-        createMap();
+      // Check if API key is available
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        setError('Google Maps API key is not configured. Please add VITE_GOOGLE_MAPS_API_KEY to your .env file.');
+        return;
       }
+
+      // Check if Google Maps is already loaded
+      if (window.google && window.google.maps) {
+        setIsLoaded(true);
+        createMap();
+        return;
+      }
+
+      // Prevent multiple script loads
+      if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+        // Script is already loading, wait for it
+        const checkLoaded = setInterval(() => {
+          if (window.google && window.google.maps) {
+            setIsLoaded(true);
+            createMap();
+            clearInterval(checkLoaded);
+          }
+        }, 100);
+        return;
+      }
+
+      // Load Google Maps API
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        setIsLoaded(true);
+        createMap();
+      };
+      
+      script.onerror = () => {
+        setError('Failed to load Google Maps API');
+      };
+      
+      document.head.appendChild(script);
     };
 
     const createMap = () => {
-      if (mapRef.current && !mapInstanceRef.current) {
+      if (mapRef.current && !mapInstanceRef.current && window.google) {
         mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
           center,
           zoom,
@@ -63,7 +93,7 @@ export default function GoogleMap({
   }, []);
 
   useEffect(() => {
-    if (mapInstanceRef.current) {
+    if (mapInstanceRef.current && isLoaded) {
       // Clear existing markers
       markersRef.current.forEach(marker => marker.setMap(null));
       markersRef.current = [];
@@ -96,14 +126,32 @@ export default function GoogleMap({
         mapInstanceRef.current.fitBounds(bounds);
       }
     }
-  }, [markers]);
+  }, [markers, isLoaded]);
 
   useEffect(() => {
-    if (mapInstanceRef.current) {
+    if (mapInstanceRef.current && isLoaded) {
       mapInstanceRef.current.setCenter(center);
       mapInstanceRef.current.setZoom(zoom);
     }
-  }, [center, zoom]);
+  }, [center, zoom, isLoaded]);
+
+  if (error) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-gray-100 border border-gray-300 rounded`}>
+        <div className="text-red-500 text-sm text-center p-4">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-gray-100 border border-gray-300 rounded`}>
+        <div className="text-gray-500 text-sm">Loading map...</div>
+      </div>
+    );
+  }
 
   return <div ref={mapRef} className={className} />;
 }
