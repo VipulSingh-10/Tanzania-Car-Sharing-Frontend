@@ -7,8 +7,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import FindRides from './pages/FindRides';
-import CreateTrip from './pages/CreateTrip';
+import RideBooking from './pages/RideBooking';
+import RideOffering from './pages/RideOffering';
+import RideTracking from './pages/RideTracking';
 import MyRides from './pages/MyRides';
 import Vehicles from './pages/Vehicles';
 import Profile from './pages/Profile';
@@ -40,14 +41,29 @@ function App() {
                   <Dashboard />
                 </ProtectedRoute>
               } />
+              <Route path="/book-ride" element={
+                <ProtectedRoute>
+                  <RideBooking />
+                </ProtectedRoute>
+              } />
+              <Route path="/offer-ride" element={
+                <ProtectedRoute>
+                  <RideOffering />
+                </ProtectedRoute>
+              } />
+              <Route path="/track-ride" element={
+                <ProtectedRoute>
+                  <RideTracking />
+                </ProtectedRoute>
+              } />
               <Route path="/find-rides" element={
                 <ProtectedRoute>
-                  <FindRides />
+                  <RideBooking />
                 </ProtectedRoute>
               } />
               <Route path="/create-trip" element={
                 <ProtectedRoute>
-                  <CreateTrip />
+                  <RideOffering />
                 </ProtectedRoute>
               } />
               <Route path="/my-rides" element={

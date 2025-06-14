@@ -13,7 +13,8 @@ import {
   LogOut,
   Menu,
   X,
-  Home
+  Home,
+  Navigation
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -34,8 +35,9 @@ export default function Layout({ children }: LayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Find Rides', href: '/find-rides', icon: Search },
-    { name: 'Create Trip', href: '/create-trip', icon: Plus },
+    { name: 'Book Ride', href: '/book-ride', icon: Search },
+    { name: 'Offer Ride', href: '/offer-ride', icon: Plus },
+    { name: 'Track Ride', href: '/track-ride', icon: Navigation },
     { name: 'My Rides', href: '/my-rides', icon: Calendar },
     { name: 'Vehicles', href: '/vehicles', icon: Car },
     { name: 'Profile', href: '/profile', icon: User },

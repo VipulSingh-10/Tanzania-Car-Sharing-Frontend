@@ -13,7 +13,8 @@ import {
   LogOut,
   Menu,
   X,
-  Home
+  Home,
+  Navigation
 } from 'lucide-react';
 
 interface MobileLayoutProps {
@@ -33,8 +34,9 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
 
   const navigation = [
     { name: 'Home', href: '/dashboard', icon: Home },
-    { name: 'Find Rides', href: '/find-rides', icon: Search },
-    { name: 'Create Trip', href: '/create-trip', icon: Plus },
+    { name: 'Book Ride', href: '/book-ride', icon: Search },
+    { name: 'Offer Ride', href: '/offer-ride', icon: Plus },
+    { name: 'Track Ride', href: '/track-ride', icon: Navigation },
     { name: 'My Rides', href: '/my-rides', icon: Calendar },
     { name: 'Vehicles', href: '/vehicles', icon: Car },
     { name: 'Profile', href: '/profile', icon: User },
@@ -151,7 +153,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
                 `}
               >
                 <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
-                <span className="text-xs font-medium">{item.name}</span>
+                <span className="text-xs font-medium">{item.name.split(' ')[0]}</span>
               </Link>
             );
           })}

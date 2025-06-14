@@ -8,8 +8,9 @@ import MobileLayout from "@/components/MobileLayout";
 import MobileDashboard from "@/pages/MobileDashboard";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
-import FindRides from "@/pages/FindRides";
-import CreateTrip from "@/pages/CreateTrip";
+import RideBooking from "@/pages/RideBooking";
+import RideOffering from "@/pages/RideOffering";
+import RideTracking from "@/pages/RideTracking";
 import MyRides from "@/pages/MyRides";
 import Vehicles from "@/pages/Vehicles";
 import Profile from "@/pages/Profile";
@@ -55,11 +56,31 @@ export default function MobileApp() {
                 }
               />
               <Route
+                path="/book-ride"
+                element={
+                  <ProtectedRoute>
+                    <MobileLayout>
+                      <RideBooking />
+                    </MobileLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/find-rides"
                 element={
                   <ProtectedRoute>
                     <MobileLayout>
-                      <FindRides />
+                      <RideBooking />
+                    </MobileLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/offer-ride"
+                element={
+                  <ProtectedRoute>
+                    <MobileLayout>
+                      <RideOffering />
                     </MobileLayout>
                   </ProtectedRoute>
                 }
@@ -69,7 +90,17 @@ export default function MobileApp() {
                 element={
                   <ProtectedRoute>
                     <MobileLayout>
-                      <CreateTrip />
+                      <RideOffering />
+                    </MobileLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/track-ride"
+                element={
+                  <ProtectedRoute>
+                    <MobileLayout>
+                      <RideTracking />
                     </MobileLayout>
                   </ProtectedRoute>
                 }
