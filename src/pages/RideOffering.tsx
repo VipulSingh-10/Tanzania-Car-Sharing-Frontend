@@ -43,6 +43,26 @@ export default function RideOffering() {
 
   const vehicles = vehiclesResponse?.responseContent || [];
 
+  const handlePickupChange = (address: string, lat?: number, lng?: number) => {
+    if (lat !== undefined && lng !== undefined) {
+      setPickupPoint({
+        latitude: lat,
+        longitude: lng,
+        placeAddress: address
+      });
+    }
+  };
+
+  const handleDestinationChange = (address: string, lat?: number, lng?: number) => {
+    if (lat !== undefined && lng !== undefined) {
+      setDestinationPoint({
+        latitude: lat,
+        longitude: lng,
+        placeAddress: address
+      });
+    }
+  };
+
   const handleCreateTrip = async () => {
     if (!pickupPoint || !destinationPoint || !tripStartTime || !selectedVehicle) {
       toast({
@@ -113,14 +133,16 @@ export default function RideOffering() {
                 <div>
                   <Label htmlFor="pickup">Pickup Location</Label>
                   <PlacesAutocomplete
-                    onPlaceSelect={(place) => setPickupPoint(place)}
+                    value=""
+                    onChange={handlePickupChange}
                     placeholder="Enter pickup location"
                   />
                 </div>
                 <div>
                   <Label htmlFor="destination">Destination</Label>
                   <PlacesAutocomplete
-                    onPlaceSelect={(place) => setDestinationPoint(place)}
+                    value=""
+                    onChange={handleDestinationChange}
                     placeholder="Enter destination"
                   />
                 </div>
