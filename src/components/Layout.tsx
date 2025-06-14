@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { 
   Car, 
   Search, 
@@ -11,7 +12,8 @@ import {
   User, 
   LogOut,
   Menu,
-  X
+  X,
+  Home
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -31,7 +33,7 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Calendar },
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Find Rides', href: '/find-rides', icon: Search },
     { name: 'Create Trip', href: '/create-trip', icon: Plus },
     { name: 'My Rides', href: '/my-rides', icon: Calendar },
@@ -40,15 +42,21 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile menu button */}
-      <div className="lg:hidden">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h1 className="text-xl font-bold text-primary">Carpool</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Car className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <h1 className="text-xl font-bold text-primary">Carpool</h1>
+          </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="hover:bg-primary/10"
           >
             {isMobileMenuOpen ? <X /> : <Menu />}
           </Button>
@@ -59,14 +67,24 @@ export default function Layout({ children }: LayoutProps) {
         {/* Sidebar */}
         <div className={`
           ${isMobileMenuOpen ? 'block' : 'hidden'} lg:block
-          w-64 min-h-screen bg-card border-r border-border
-          fixed lg:static inset-y-0 left-0 z-50
+          w-72 min-h-screen bg-white/80 backdrop-blur-sm border-r border-border/50
+          fixed lg:static inset-y-0 left-0 z-40
         `}>
           <div className="flex flex-col h-full">
-            <div className="p-6 border-b border-border hidden lg:block">
-              <h1 className="text-2xl font-bold text-primary">Carpool</h1>
+            {/* Logo */}
+            <div className="p-6 border-b border-border/50 hidden lg:block">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                  <Car className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-primary">Carpool</h1>
+                  <p className="text-xs text-muted-foreground">Share the journey</p>
+                </div>
+              </div>
             </div>
             
+            {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2">
               {navigation.map((item) => {
                 const Icon = item.icon;
@@ -78,41 +96,48 @@ export default function Layout({ children }: LayoutProps) {
                     to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`
-                      flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors
+                      group flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                       ${isActive 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:shadow-md'
                       }
                     `}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-primary-foreground' : 'group-hover:text-primary'} transition-colors`} />
                     <span>{item.name}</span>
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="p-4 border-t border-border">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-primary-foreground text-sm font-medium">
-                    {userInfo?.fullName?.charAt(0) || 'U'}
-                  </span>
+            {/* User Profile */}
+            <div className="p-4 border-t border-border/50">
+              <Card className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary-foreground text-sm font-bold">
+                      {userInfo?.fullName?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {userInfo?.fullName || 'User'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {userInfo?.emailId || ''}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">{userInfo?.fullName || 'User'}</p>
-                  <p className="text-xs text-muted-foreground">{userInfo?.emailId || ''}</p>
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleLogout}
-                className="w-full"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleLogout}
+                  className="w-full border-primary/20 hover:bg-primary/10 hover:border-primary/30"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </Card>
             </div>
           </div>
         </div>
@@ -120,14 +145,14 @@ export default function Layout({ children }: LayoutProps) {
         {/* Mobile menu overlay */}
         {isMobileMenuOpen && (
           <div 
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
 
         {/* Main content */}
         <div className="flex-1 lg:ml-0">
-          <main className="p-6">
+          <main className="p-6 max-w-7xl mx-auto">
             {children}
           </main>
         </div>
