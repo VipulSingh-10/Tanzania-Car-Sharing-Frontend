@@ -21,7 +21,7 @@ import {
 
 
 
-const API_BASE_URL = 'http://localhost:8911/api'; // Update this to your actual API URL
+const API_BASE_URL = 'http://192.168.0.230:8911/api';
 
 class ApiService {
   private async makeRequest<T>(

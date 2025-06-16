@@ -1,73 +1,186 @@
-# Welcome to your Lovable project
 
-## Project info
+# Project Name: Carpool - Share the Journey
 
-**URL**: https://lovable.dev/projects/3f637359-c705-4f67-b7f4-ea1985926348
+## Overview
 
-## How can I edit this code?
+**Carpool** is a ride-sharing platform that allows users to book rides, offer rides, and connect with other users to reduce commute costs and environmental impact. The platform includes features like ride tracking, vehicle management, and user authentication. It is built with modern web technologies and offers a polished user experience across both desktop and mobile devices.
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Key Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3f637359-c705-4f67-b7f4-ea1985926348) and start prompting.
+- **Ride Booking**: Search and book rides from one location to another.
+- **Ride Offering**: Share your rides by offering available seats in your vehicle.
+- **Live Tracking**: Track the location of ongoing or upcoming rides on an integrated Google Map.
+- **Authentication and Authorization**: User authentication is handled via protected routes to ensure safe and personalized access.
+- **Vehicle Management**: Add and manage user vehicles with detailed metadata like seating capacity, vehicle type, and more.
+- **Seamless User Experience**: Custom components for both desktop and mobile devices, providing an intuitive navigation experience.
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## Technology Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**:
+  - **React 18.3.1**: Core frontend library for building UI.
+  - **TailwindCSS**: Utility-first CSS framework for UI styling.
+  - **Radix UI**: Accessible UI primitives for dropdowns, menus, and tooltips.
+  - **TypeScript 5.5.3**: Provides static typing for better code maintainability.
+- **Backend**:
+  - Assumes API connectivity with a backend service through REST endpoints.
+- **Map Integration**:
+  - **Google Maps API**: Used for visualizing ride locations, live tracking, and place autocomplete.
+- **State Management**:
+  - **React Context API** with hooks to manage app-wide state (e.g., authentication, user info).
+- **Routing**:
+  - **React Router**: Client-side navigation for pages and protected routes.
+- **Icons**:
+  - **Lucide Icons**: Vector icons for a modern and visually engaging design.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## Project Structure
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Here's an overview of the key parts of the project:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Components**:
+   - `Layout.tsx` / `MobileLayout.tsx`: Responsively handle layouts for desktop and mobile views with features like navigation menus and user profiles.
+   - `GoogleMap.tsx`: Fully interactive Google Maps component for live ride tracking and markers.
+   - `PlacesAutocomplete.tsx`: Google Places integration for searching locations.
+   - `ProtectedRoute.tsx`: Protects certain routes and ensures access is allowed only for authenticated users.
+   
+2. **API Layer**:
+   - **`api.ts`**:
+     - Defines reusable DTOs (Data Transfer Objects) for handling common API requests and responses.
+     - Emphasizes type safety for user info, rides, trips, and vehicles.
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. **Environment Variables**:
+   - **`.env.example`**:
+     - Configurable keys for the Google Maps API and backend API base URL.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+## Setup Instructions
+
+Follow these steps to set up the project for development:
+
+1. **Clone the Repository**:
+```shell
+git clone <repository-url>
+cd <repository-name>
+```
+
+2. **Install Dependencies**:
+Ensure that `npm` or `yarn` is installed.
+```shell
+npm install
+```
+
+3. **Environment Configuration**:
+- Rename the `.env.example` file to `.env`:
+```shell
+cp .env.example .env
+```
+- Update the environmental variables in `.env`:
+  - `VITE_GOOGLE_MAPS_API_KEY`: Your Google Maps API Key.
+  - `VITE_API_BASE_URL`: Backend API base URL.
+
+4. **Run the Project**:
+```shell
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+5. **Build for Production**:
+```shell
+npm run build
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+6. **Run Tests (Optional)**:
+```shell
+npm test
+```
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Usage
 
-## What technologies are used for this project?
+- **Authentication**: Login or register as a user to access ride-sharing features.
+- **Offer a Ride**: Provide the starting point, destination, and available seats to share your trip with others.
+- **Book a Ride**: Search for destinations and book available seats.
+- **Live Tracking**: View your current or upcoming rides on an interactive map.
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Map Integration
 
-## How can I deploy this project?
+This project integrates with **Google Maps API** for key features:
+- **Places Autocomplete**: Find and select pickup and destination locations.
+- **Ride Tracking**: Displays markers and live route updates.
 
-Simply open [Lovable](https://lovable.dev/projects/3f637359-c705-4f67-b7f4-ea1985926348) and click on Share -> Publish.
+> **Note**: Ensure that `VITE_GOOGLE_MAPS_API_KEY` is correctly set in the `.env` file.
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## Environment Configuration
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Use the provided `.env.example` file as a reference to configure your Google Maps API and backend integration:
+```
+# Google Maps API Key
+VITE_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_API_KEY
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+# Backend API Base URL
+VITE_API_BASE_URL=https://your-api-domain.com
+```
+
+---
+
+## Folder Structure
+
+The project follows this folder structure for maintainability:
+```
+src/
+├── components/
+│   ├── Layout.tsx
+│   ├── MobileLayout.tsx
+│   ├── GoogleMap.tsx
+│   ├── PlacesAutocomplete.tsx
+│   ├── ProtectedRoute.tsx
+├── api/
+│   └── api.ts        [DTO and API request/response types]
+├── styles/           [Global or component-based styles]
+├── pages/            [Application pages driven by React Router]
+├── contexts/         [AuthContext for authentication state]
+├── App.tsx           [Root application component]
+```
+
+---
+
+## Future Enhancements
+
+- **Real-time Notifications**: Use WebSockets for live updates on ride cancellations or status changes.
+- **Payment Integration**: Add payment gateways for easy transaction handling.
+- **Enhanced Tracking**: Implement real-time ride tracking for passengers.
+- **Admin Panel**: Include an admin dashboard for managing users and rides.
+
+---
+
+## License
+
+This project is licensed under the **MIT License**. See the `LICENSE` file for details.
+
+---
+
+## Acknowledgements
+
+- [Google Maps API](https://developers.google.com/maps/documentation) for mapping and autocomplete functionality.
+- [React](https://reactjs.org/) for building the core frontend.
+- [TailwindCSS](https://tailwindcss.com/) for styling the application.
+
+---
+
+## Contributors
+
+- Vipul Singh (singhv@students.uni-marburg.de)
+
+---
+
+Feel free to reach out for support or further questions!
