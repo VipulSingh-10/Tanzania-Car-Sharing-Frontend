@@ -29,6 +29,8 @@ export default function RideBooking() {
 
   const [pickupPoint, setPickupPoint] = useState<Points | null>(null);
   const [destinationPoint, setDestinationPoint] = useState<Points | null>(null);
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [destinationAddress, setDestinationAddress] = useState('');
   const [rideStartTime, setRideStartTime] = useState('');
   const [requestedSeats, setRequestedSeats] = useState(1);
   const [availableRides, setAvailableRides] = useState<TripBasicInfoDTO[]>([]);
@@ -36,6 +38,7 @@ export default function RideBooking() {
   const [isJoining, setIsJoining] = useState<string | null>(null);
 
   const handlePickupChange = (address: string, lat?: number, lng?: number) => {
+    setPickupAddress(address);
     if (lat !== undefined && lng !== undefined) {
       setPickupPoint({
         latitude: lat,
@@ -46,6 +49,7 @@ export default function RideBooking() {
   };
 
   const handleDestinationChange = (address: string, lat?: number, lng?: number) => {
+    setDestinationAddress(address);
     if (lat !== undefined && lng !== undefined) {
       setDestinationPoint({
         latitude: lat,
@@ -166,7 +170,7 @@ export default function RideBooking() {
               <div>
                 <Label htmlFor="pickup">Pickup Location</Label>
                 <PlacesAutocomplete
-                  value=""
+                  value={pickupAddress}
                   onChange={handlePickupChange}
                   placeholder="Enter pickup location"
                 />
@@ -174,7 +178,7 @@ export default function RideBooking() {
               <div>
                 <Label htmlFor="destination">Destination</Label>
                 <PlacesAutocomplete
-                  value=""
+                  value={destinationAddress}
                   onChange={handleDestinationChange}
                   placeholder="Enter destination"
                 />
