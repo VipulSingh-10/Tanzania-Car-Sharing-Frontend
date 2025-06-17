@@ -32,4 +32,4 @@ dist-ssr
 
 # Capacitor generated files
 android/
-ios/
+ios/.env
