@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
-import PlacesAutocomplete from '@/components/PlacesAutocomplete';
+import LocationSearch from '@/components/LocationSearch';
 import { 
   Search, 
   MapPin, 
@@ -169,19 +169,23 @@ export default function RideBooking() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="pickup">Pickup Location</Label>
-                <PlacesAutocomplete
+                <LocationSearch
                   value={pickupAddress}
-                  onChange={handlePickupChange}
+                  onChange={(address, lat, lon) => {
+                    handlePickupChange(address, lat, lon);
+                  }}
                   placeholder="Enter pickup location"
                 />
               </div>
               <div>
                 <Label htmlFor="destination">Destination</Label>
-                <PlacesAutocomplete
-                  value={destinationAddress}
-                  onChange={handleDestinationChange}
-                  placeholder="Enter destination"
-                />
+                  <LocationSearch
+                    value={destinationAddress}
+                    onChange={(address, lat, lon) => {
+                      handleDestinationChange(address, lat, lon);
+                    }}
+                    placeholder="Enter destination"
+                  />
               </div>
             </div>
             

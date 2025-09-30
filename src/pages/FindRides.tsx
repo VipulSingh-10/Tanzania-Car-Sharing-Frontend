@@ -11,8 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Search, MapPin, Clock, Users, Car } from 'lucide-react';
-import PlacesAutocomplete from '@/components/PlacesAutocomplete';
-import GoogleMap from '@/components/GoogleMap';
+import LocationSearch from '@/components/LocationSearch';
+import MapView, { MarkerLoc } from '@/components/MapView';
 
 export default function FindRides() {
   const { userId } = useAuth();
@@ -145,19 +145,23 @@ export default function FindRides() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="pickup-location">Pickup Location</Label>
-                <PlacesAutocomplete
-                    id="pickup-location"
-                    value={searchParams.pickupPoint.placeAddress}
-                    onChange={handlePickupChange}
-                    placeholder="Enter pickup location"
-                />
+                <LocationSearch
+                      value={searchParams.pickupPoint.placeAddress}
+                      onChange={(address, lat, lon) => setSearchParams(prev => ({
+                        ...prev,
+                        pickupPoint: { latitude: lat || 0, longitude: lon || 0, placeAddress: address }
+                      }))}
+                      placeholder="Enter pickup location"
+                  />
               </div>
               <div>
                 <Label htmlFor="destination-location">Destination</Label>
-                <PlacesAutocomplete
-                    id="destination-location"
+                <LocationSearch
                     value={searchParams.destinationPoint.placeAddress}
-                    onChange={handleDestinationChange}
+                    onChange={(address, lat, lon) => setSearchParams(prev => ({
+                      ...prev,
+                      destinationPoint: { latitude: lat || 0, longitude: lon || 0, placeAddress: address }
+                    }))}
                     placeholder="Enter destination"
                 />
               </div>
@@ -196,15 +200,15 @@ export default function FindRides() {
         </Card>
 
         {/* Map View of Found Rides */}
-        {rides.length > 0 && mapMarkers.length > 0 && (
+        {rides.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Available Rides Map</CardTitle>
             </CardHeader>
             <CardContent>
-              <GoogleMap
-                markers={mapMarkers}
-                className="w-full h-64 rounded-lg border"
+              <MapView
+                markers={rides.map(r => ({ latitude: r.pickupPoint.latitude, longitude: r.pickupPoint.longitude })) as MarkerLoc[]}
+                height="256px"
               />
             </CardContent>
           </Card>

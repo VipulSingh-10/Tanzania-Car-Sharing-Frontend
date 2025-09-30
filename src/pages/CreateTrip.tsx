@@ -11,8 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Car } from 'lucide-react';
 import { OfferRideDTO } from '@/types/api';
-import PlacesAutocomplete from '@/components/PlacesAutocomplete';
-import GoogleMap from '@/components/GoogleMap';
+import LocationSearch from '@/components/LocationSearch';
+import MapView, { MarkerLoc } from '@/components/MapView';
 
 export default function CreateTrip() {
   const { userId } = useAuth();
@@ -172,20 +172,24 @@ export default function CreateTrip() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="create-pickup-location">Pickup Location</Label>
-                  <PlacesAutocomplete
-                      id="create-pickup-location"
+                  <LocationSearch
                       value={tripData.pickupPoint.placeAddress}
-                      onChange={handlePickupChange}
+                      onChange={(address, lat, lon) => setTripData(prev => ({
+                        ...prev,
+                        pickupPoint: { latitude: lat || 0, longitude: lon || 0, placeAddress: address }
+                      }))}
                       placeholder="Enter pickup location"
                       required
                   />
                 </div>
                 <div>
                   <Label htmlFor="create-destination-location">Destination</Label>
-                  <PlacesAutocomplete
-                      id="create-destination-location"
+                  <LocationSearch
                       value={tripData.destinationPoint.placeAddress}
-                      onChange={handleDestinationChange}
+                      onChange={(address, lat, lon) => setTripData(prev => ({
+                        ...prev,
+                        destinationPoint: { latitude: lat || 0, longitude: lon || 0, placeAddress: address }
+                      }))}
                       placeholder="Enter destination"
                       required
                   />
@@ -196,9 +200,9 @@ export default function CreateTrip() {
               {mapMarkers.length > 0 && (
                 <div className="space-y-2">
                   <Label>Route Preview</Label>
-                  <GoogleMap
-                    markers={mapMarkers}
-                    className="w-full h-64 rounded-lg border"
+                  <MapView
+                    markers={mapMarkers.map(m => ({ latitude: m.position.lat, longitude: m.position.lng })) as MarkerLoc[]}
+                    height="256px"
                   />
                 </div>
               )}

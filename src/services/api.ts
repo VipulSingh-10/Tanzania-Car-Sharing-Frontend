@@ -21,7 +21,9 @@ import {
 
 
 
-const API_BASE_URL = 'http://192.168.0.230:8911/api';
+// Force using the environment variable without fallback
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+console.log('Using API URL:', API_BASE_URL);
 
 class ApiService {
   private async makeRequest<T>(
