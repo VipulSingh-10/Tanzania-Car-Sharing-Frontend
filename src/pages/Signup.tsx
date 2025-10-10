@@ -36,7 +36,12 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
+      // Debug: Log the data being sent
+      console.log('Signup form data being sent:', formData);
+      
       const response = await apiService.signup(formData);
+      
+      console.log('Signup response:', response);
       
       if (response.success && response.responseContent) {
         const { token, emailId } = response.responseContent;
@@ -47,6 +52,8 @@ export default function Signup() {
         
         // Get user info after successful signup
         const userInfoResponse = await apiService.getUserInfo(emailId);
+        
+        console.log('User info after signup:', userInfoResponse);
         
         if (userInfoResponse.success && userInfoResponse.responseContent) {
           // Log the user in automatically
@@ -73,6 +80,7 @@ export default function Signup() {
         });
       }
     } catch (error) {
+      console.error('Signup error:', error);
       toast({
         title: 'Error',
         description: 'Failed to connect to server. Please try again.',
