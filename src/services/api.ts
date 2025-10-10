@@ -54,11 +54,20 @@ class ApiService {
       ...options,
     });
 
-    // Handle authentication errors
+    // Handle authentication errors - only redirect for critical endpoints
     if (response.status === 401 || response.status === 403) {
-      clearAuthData();
-      window.location.href = '/login';
-      throw new Error('Authentication failed. Please login again.');
+      // Only clear auth and redirect for login/signup/user profile endpoints
+      const isCriticalEndpoint = 
+        endpoint.includes('/api/auth/') || 
+        endpoint.includes('/api/users/');
+      
+      if (isCriticalEndpoint) {
+        clearAuthData();
+        window.location.href = '/login';
+        throw new Error('Authentication failed. Please login again.');
+      }
+      // For other endpoints, just throw error without redirecting
+      throw new Error(`Unauthorized: ${endpoint}`);
     }
 
     if (!response.ok) {

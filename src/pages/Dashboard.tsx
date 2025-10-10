@@ -11,16 +11,18 @@ import { Link } from 'react-router-dom';
 export default function Dashboard() {
   const { userInfo } = useAuth();
 
-  const { data: upcomingRides } = useQuery({
+  const { data: upcomingRides, error: upcomingRidesError } = useQuery({
     queryKey: ['upcomingRides', userInfo?.userId],
     queryFn: () => apiService.getUpcomingRides(userInfo!.userId!),
     enabled: !!userInfo?.userId,
+    retry: false, // Don't retry if service not implemented
   });
 
-  const { data: vehicles } = useQuery({
+  const { data: vehicles, error: vehiclesError } = useQuery({
     queryKey: ['vehicles', userInfo?.userId],
     queryFn: () => apiService.getUserVehicles(userInfo!.userId!),
     enabled: !!userInfo?.userId,
+    retry: false, // Don't retry if service not implemented
   });
 
   const upcomingRidesData = upcomingRides?.responseContent || [];

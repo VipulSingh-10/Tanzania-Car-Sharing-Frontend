@@ -27,6 +27,10 @@ export default function Login() {
       if (response.success && response.responseContent) {
         const { token, emailId: userEmail } = response.responseContent;
         
+        // Store token in localStorage FIRST before making authenticated requests
+        localStorage.setItem('carpoolToken', token);
+        localStorage.setItem('carpoolUserId', userEmail);
+        
         // Get user info after successful login using the token
         const userInfoResponse = await apiService.getUserInfo(userEmail);
         
