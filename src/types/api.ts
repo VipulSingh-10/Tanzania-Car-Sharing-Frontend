@@ -31,13 +31,12 @@ export interface UserInfoDTO {
   emailId: string;
   userId?: string;
   phoneNumber: string;
-  password?: string;
+  password?: string; // Only used during signup, not returned from backend
   age?: number;
-  dob?: string;
+  dob?: Date;
   empId?: string;
   organisationName?: string;
   profilePicUrl?: string;
-  userCars?: Vehicles[];
 }
 
 export interface LoginRequestDTO {
@@ -46,16 +45,13 @@ export interface LoginRequestDTO {
 }
 
 export interface LoginResponseDTO {
-  username?: string;
-  userId?: string;
-  loginSuccess: boolean;
-  errMsg?: string;
+  token: string;
+  emailId: string;
 }
 
 export interface SignUpResponseDTO {
-  userId?: string;
-  username?: string;
-  signUpSuccess: boolean;
+  token: string;
+  emailId: string;
 }
 
 // Ride Types

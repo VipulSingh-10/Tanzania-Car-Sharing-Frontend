@@ -24,13 +24,16 @@ export default function Login() {
     try {
       const response = await apiService.login({ emailId, password });
       
-      if (response.success && response.responseContent?.loginSuccess) {
-        // Get user info after successful login
-        const userInfoResponse = await apiService.getUserInfo(response.responseContent.userId!);
+      if (response.success && response.responseContent) {
+        const { token, emailId: userEmail } = response.responseContent;
+        
+        // Get user info after successful login using the token
+        const userInfoResponse = await apiService.getUserInfo(userEmail);
         
         if (userInfoResponse.success && userInfoResponse.responseContent) {
           login(
-            response.responseContent.userId!,
+            token,
+            userEmail,
             userInfoResponse.responseContent
           );
           navigate('/dashboard');
@@ -44,7 +47,7 @@ export default function Login() {
       } else {
         toast({
           title: 'Login failed',
-          description: response.responseContent?.errMsg || response.errorMessage || 'Invalid credentials',
+          description: response.errorMessage || 'Invalid credentials',
           variant: 'destructive',
         });
       }

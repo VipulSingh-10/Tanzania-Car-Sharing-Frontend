@@ -5,8 +5,9 @@ import { UserInfoDTO } from '@/types/api';
 interface AuthContextType {
   userInfo: UserInfoDTO | null;
   userId: string | null;
+  token: string | null;
   isAuthenticated: boolean;
-  login: (userId: string, userInfo: UserInfoDTO) => void;
+  login: (token: string, emailId: string, userInfo: UserInfoDTO) => void;
   logout: () => void;
 }
 
@@ -27,28 +28,35 @@ interface AuthProviderProps {
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [userInfo, setUserInfo] = useState<UserInfoDTO | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for stored auth data on app load
+    const storedToken = localStorage.getItem('carpoolToken');
     const storedUserId = localStorage.getItem('carpoolUserId');
     const storedUser = localStorage.getItem('carpoolUser');
     
-    if (storedUserId && storedUser) {
+    if (storedToken && storedUserId && storedUser) {
+      setToken(storedToken);
       setUserId(storedUserId);
       setUserInfo(JSON.parse(storedUser));
     }
   }, []);
 
-  const login = (newUserId: string, userData: UserInfoDTO) => {
-    setUserId(newUserId);
+  const login = (newToken: string, emailId: string, userData: UserInfoDTO) => {
+    setToken(newToken);
+    setUserId(emailId);
     setUserInfo(userData);
-    localStorage.setItem('carpoolUserId', newUserId);
+    localStorage.setItem('carpoolToken', newToken);
+    localStorage.setItem('carpoolUserId', emailId);
     localStorage.setItem('carpoolUser', JSON.stringify(userData));
   };
 
   const logout = () => {
+    setToken(null);
     setUserId(null);
     setUserInfo(null);
+    localStorage.removeItem('carpoolToken');
     localStorage.removeItem('carpoolUserId');
     localStorage.removeItem('carpoolUser');
   };
@@ -56,7 +64,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const value = {
     userInfo,
     userId,
-    isAuthenticated: !!userId,
+    token,
+    isAuthenticated: !!token && !!userId,
     login,
     logout,
   };

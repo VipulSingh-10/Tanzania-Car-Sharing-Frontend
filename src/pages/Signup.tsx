@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiService } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,7 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,12 +38,29 @@ export default function Signup() {
     try {
       const response = await apiService.signup(formData);
       
-      if (response.success && response.responseContent?.signUpSuccess) {
-        navigate('/login');
-        toast({
-          title: 'Account created!',
-          description: 'Your account has been created successfully. Please log in.',
-        });
+      if (response.success && response.responseContent) {
+        const { token, emailId } = response.responseContent;
+        
+        // Get user info after successful signup
+        const userInfoResponse = await apiService.getUserInfo(emailId);
+        
+        if (userInfoResponse.success && userInfoResponse.responseContent) {
+          // Log the user in automatically
+          login(token, emailId, userInfoResponse.responseContent);
+          
+          navigate('/dashboard');
+          toast({
+            title: 'Account created!',
+            description: 'Your account has been created successfully. Welcome!',
+          });
+        } else {
+          // If user info fetch fails, redirect to login
+          navigate('/login');
+          toast({
+            title: 'Account created!',
+            description: 'Your account has been created. Please log in.',
+          });
+        }
       } else {
         toast({
           title: 'Signup failed',
