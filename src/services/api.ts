@@ -133,11 +133,23 @@ class ApiService {
     }, true);
   }
 
-  // Trip Creation
+  // Trip Creation (Offer Ride)
   async createTrip(userId: string, tripData: OfferRideDTO): Promise<ResponseDTO<CreateTripResponseDTO>> {
-    return this.makeRequest('/api/ride/create-trip', {
+    // Map frontend field names to backend field names
+    const requestData = {
+      userId,
+      requestContent: {
+        VehicleNumber: tripData.vehicleNumber,
+        sourceAddress: tripData.pickupPoint,
+        destinationAddress: tripData.destinationPoint,
+        tripStartDateTime: tripData.tripStartTime,
+        offeredSeat: tripData.offeredSeats
+      }
+    };
+    
+    return this.makeRequest('/api/trips/offer', {
       method: 'POST',
-      body: JSON.stringify({ userId, requestContent: tripData }),
+      body: JSON.stringify(requestData),
     }, true);
   }
 

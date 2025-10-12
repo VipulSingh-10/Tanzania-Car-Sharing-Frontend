@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Points, OfferRideDTO, VehicleResponseDTO } from '@/types/api';
 import { useQuery } from '@tanstack/react-query';
+import { getUserTimezone, formatDateTimeWithTimezone, getMinDateTime } from '@/lib/timezone-utils';
 
 export default function RideOffering() {
   const { userId } = useAuth();
@@ -35,6 +36,12 @@ export default function RideOffering() {
   const [offeredSeats, setOfferedSeats] = useState(1);
   const [selectedVehicle, setSelectedVehicle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [userTimezone, setUserTimezone] = useState<string>('');
+
+  // Auto-detect user's timezone
+  useEffect(() => {
+    setUserTimezone(getUserTimezone());
+  }, []);
 
   // Fetch user vehicles
   const { data: vehiclesResponse } = useQuery({
@@ -79,33 +86,64 @@ export default function RideOffering() {
 
     setIsCreating(true);
     try {
+      // Format datetime with timezone offset using utility function
+      const formattedTripStartTime = formatDateTimeWithTimezone(tripStartTime);
+      
+      console.log('Sending trip data with timezone:', {
+        tripStartTime: formattedTripStartTime,
+        userTimezone,
+        originalInput: tripStartTime
+      });
+
       const tripData: OfferRideDTO = {
         vehicleNumber: selectedVehicle,
         pickupPoint,
         destinationPoint,
-        tripStartTime,
+        tripStartTime: formattedTripStartTime,
         offeredSeats,
       };
 
       const response = await apiService.createTrip(userId!, tripData);
       
       if (response.success && response.responseContent?.tripCreated) {
+        const tripInfo = response.responseContent;
+        const tripTimezoneInfo = tripInfo.tripTimezone ? ` (${tripInfo.tripTimezone})` : '';
+        
+        // Build success message with route information
+        let description = `Your ride has been successfully created and is now available for booking.${tripTimezoneInfo}`;
+        
+        // Add route information if available
+        if (tripInfo.routeDistanceInKm && tripInfo.routeDurationInMinutes) {
+          const distance = tripInfo.routeDistanceInKm.toFixed(1);
+          const duration = Math.round(tripInfo.routeDurationInMinutes);
+          description += `\n📍 Distance: ${distance} km\n⏱️ Estimated duration: ${duration} minutes`;
+        }
+        
         toast({
           title: 'Trip Created!',
-          description: 'Your ride has been successfully created and is now available for booking.',
+          description,
         });
+        
+        console.log('Trip created with route data:', {
+          tripId: tripInfo.tripId,
+          distance: tripInfo.routeDistanceInKm,
+          duration: tripInfo.routeDurationInMinutes,
+          routeGeometry: tripInfo.routeGeometry
+        });
+        
         navigate('/my-rides');
       } else {
         toast({
           title: 'Creation Failed',
-          description: response.responseContent?.errMsg || response.errorMessage || 'Failed to create trip.',
+          description: response.responseContent?.errorMessage || 'Failed to create trip.',
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Create trip error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create trip. Please try again.',
+        description: error?.message || 'Failed to create trip. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -157,15 +195,24 @@ export default function RideOffering() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Trip Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="datetime">Departure Time</Label>
                   <Input
                     id="datetime"
                     type="datetime-local"
                     value={tripStartTime}
                     onChange={(e) => setTripStartTime(e.target.value)}
-                    min={new Date().toISOString().slice(0, 16)}
+                    min={getMinDateTime()}
                   />
+                  {userTimezone && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>Your timezone: {userTimezone}</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Time will be displayed correctly for users in different timezones
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="seats">Available Seats</Label>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
@@ -9,15 +9,22 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Car } from 'lucide-react';
+import { Plus, Car, Clock } from 'lucide-react';
 import { OfferRideDTO } from '@/types/api';
 import LocationSearch from '@/components/LocationSearch';
 import MapView, { MarkerLoc } from '@/components/MapView';
+import { getUserTimezone, formatDateTimeWithTimezone, getMinDateTime } from '@/lib/timezone-utils';
 
 export default function CreateTrip() {
   const { userId } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [userTimezone, setUserTimezone] = useState<string>('');
+
+  // Auto-detect user's timezone
+  useEffect(() => {
+    setUserTimezone(getUserTimezone());
+  }, []);
   const [tripData, setTripData] = useState<OfferRideDTO>({
     vehicleNumber: '',
     pickupPoint: {
@@ -44,10 +51,32 @@ export default function CreateTrip() {
     mutationFn: (data: OfferRideDTO) => apiService.createTrip(userId!, data),
     onSuccess: (response) => {
       if (response.success && response.responseContent?.tripCreated) {
+        const tripInfo = response.responseContent;
+        const tripTimezoneInfo = tripInfo.tripTimezone ? ` (${tripInfo.tripTimezone})` : '';
+        
+        // Build success message with route information
+        let description = `Your trip has been posted and is now available for others to join.${tripTimezoneInfo}`;
+        
+        // Add route information if available
+        if (tripInfo.routeDistanceInKm && tripInfo.routeDurationInMinutes) {
+          const distance = tripInfo.routeDistanceInKm.toFixed(1);
+          const duration = Math.round(tripInfo.routeDurationInMinutes);
+          description += `\n📍 Distance: ${distance} km\n⏱️ Estimated duration: ${duration} minutes`;
+        }
+        
         toast({
           title: 'Trip created successfully!',
-          description: 'Your trip has been posted and is now available for others to join.',
+          description,
         });
+        
+        console.log('Trip created with route data:', {
+          tripId: tripInfo.tripId,
+          distance: tripInfo.routeDistanceInKm,
+          duration: tripInfo.routeDurationInMinutes,
+          routeGeometry: tripInfo.routeGeometry
+        });
+        
+        // Reset form
         setTripData({
           vehicleNumber: '',
           pickupPoint: {
@@ -67,15 +96,16 @@ export default function CreateTrip() {
       } else {
         toast({
           title: 'Failed to create trip',
-          description: response.responseContent?.errMsg || 'Could not create trip',
+          description: response.responseContent?.errorMessage || 'Could not create trip',
           variant: 'destructive',
         });
       }
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Create trip error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create trip. Please try again.',
+        description: error?.message || 'Failed to create trip. Please try again.',
         variant: 'destructive',
       });
     },
@@ -92,8 +122,15 @@ export default function CreateTrip() {
       return;
     }
     
-    // Convert datetime-local to ISO string
-    const tripStartTime = new Date(tripData.tripStartTime).toISOString();
+    // Format datetime with timezone offset using utility function
+    const tripStartTime = formatDateTimeWithTimezone(tripData.tripStartTime);
+    
+    console.log('Sending trip data with timezone:', {
+      tripStartTime,
+      userTimezone,
+      originalInput: tripData.tripStartTime
+    });
+    
     createTripMutation.mutate({
       ...tripData,
       tripStartTime,
@@ -208,7 +245,7 @@ export default function CreateTrip() {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="datetime">Trip Start Time *</Label>
                   <Input
                     id="datetime"
@@ -216,7 +253,17 @@ export default function CreateTrip() {
                     value={tripData.tripStartTime}
                     onChange={(e) => setTripData({...tripData, tripStartTime: e.target.value})}
                     required
+                    min={getMinDateTime()}
                   />
+                  {userTimezone && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>Your timezone: {userTimezone}</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Time will be displayed correctly for users in different timezones
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="seats">Offered Seats *</Label>
