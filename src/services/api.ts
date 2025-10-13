@@ -16,7 +16,10 @@ import {
   OfferRideDTO,
   CreateTripResponseDTO,
   VehicleResponseDTO,
-  VehicleRegisterRequestDTO
+  VehicleRegisterRequestDTO,
+  DriverUpcomingTripDTO,
+  PassengerUpcomingRideDTO,
+  TripSearchResultDTO
 } from '@/types/api';
 import { clearAuthData } from '@/lib/auth-utils';
 
@@ -31,10 +34,15 @@ class ApiService {
     return localStorage.getItem('carpoolToken');
   }
 
+  private getUserId(): string | null {
+    return localStorage.getItem('carpoolUserId');
+  }
+
   private async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {},
-    requiresAuth: boolean = false
+    requiresAuth: boolean = false,
+    includeUserId: boolean = false
   ): Promise<T> {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -46,6 +54,14 @@ class ApiService {
       const token = this.getAuthToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    // Add X-User-Id header if requested
+    if (includeUserId) {
+      const userId = this.getUserId();
+      if (userId) {
+        headers['X-User-Id'] = userId;
       }
     }
 
@@ -111,12 +127,20 @@ class ApiService {
     }, true);
   }
 
-  // My Rides
-  async getUpcomingRides(userId: string): Promise<ResponseListDTO<RideBasicInfoDTO>> {
-    return this.makeRequest('/api/myrides/upcoming', {
-      method: 'POST',
-      body: JSON.stringify({ userId, requestContent: null }),
-    }, true);
+  // My Rides - UPDATED for new backend endpoints
+  
+  // Get upcoming trips for drivers (rides they're offering)
+  async getUpcomingRides(userId: string): Promise<ResponseDTO<DriverUpcomingTripDTO[]>> {
+    return this.makeRequest(`/api/trips/my-trips/upcoming`, {
+      method: 'GET',
+    }, true, true); // requiresAuth = true, includeUserId = true
+  }
+
+  // Get upcoming rides for passengers (rides they've booked)
+  async getMyUpcomingRidesAsPassenger(userId: string): Promise<ResponseDTO<PassengerUpcomingRideDTO[]>> {
+    return this.makeRequest(`/api/trips/my-rides/upcoming`, {
+      method: 'GET',
+    }, true, true); // requiresAuth = true, includeUserId = true
   }
 
   async getHistoryRides(userId: string): Promise<ResponseListDTO<RideBasicInfoDTO>> {
@@ -139,7 +163,7 @@ class ApiService {
     const requestData = {
       userId,
       requestContent: {
-        VehicleNumber: tripData.vehicleNumber,
+        vehicleNumber: tripData.vehicleNumber, // Backend now accepts camelCase
         sourceAddress: tripData.pickupPoint,
         destinationAddress: tripData.destinationPoint,
         tripStartDateTime: tripData.tripStartTime,
@@ -151,6 +175,56 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(requestData),
     }, true);
+  }
+
+  // Trip Search Endpoints (NEW)
+  
+  // Find trips starting near a specific location
+  async searchTripsNearSource(latitude: number, longitude: number, radiusKm: number = 5): Promise<TripSearchResultDTO[]> {
+    return this.makeRequest(
+      `/api/trips/search/near-source?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`,
+      { method: 'GET' },
+      true
+    );
+  }
+
+  // Find trips ending near a specific location
+  async searchTripsNearDestination(latitude: number, longitude: number, radiusKm: number = 5): Promise<TripSearchResultDTO[]> {
+    return this.makeRequest(
+      `/api/trips/search/near-destination?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`,
+      { method: 'GET' },
+      true
+    );
+  }
+
+  // Find trips matching both source and destination
+  async searchTripsMatchingRoute(
+    sourceLat: number,
+    sourceLon: number,
+    destLat: number,
+    destLon: number,
+    sourceRadiusKm: number = 5,
+    destRadiusKm: number = 5
+  ): Promise<TripSearchResultDTO[]> {
+    return this.makeRequest(
+      `/api/trips/search/matching-route?sourceLat=${sourceLat}&sourceLon=${sourceLon}&sourceRadiusKm=${sourceRadiusKm}&destLat=${destLat}&destLon=${destLon}&destRadiusKm=${destRadiusKm}`,
+      { method: 'GET' },
+      true
+    );
+  }
+
+  // Find trips in a bounding box area
+  async searchTripsInArea(
+    minLat: number,
+    minLon: number,
+    maxLat: number,
+    maxLon: number
+  ): Promise<TripSearchResultDTO[]> {
+    return this.makeRequest(
+      `/api/trips/search/in-area?minLat=${minLat}&minLon=${minLon}&maxLat=${maxLat}&maxLon=${maxLon}`,
+      { method: 'GET' },
+      true
+    );
   }
 
   // Vehicle Management

@@ -25,6 +25,7 @@ export default function Dashboard() {
     retry: false, // Don't retry if service not implemented
   });
 
+  // Updated to handle new response structure
   const upcomingRidesData = upcomingRides?.responseContent || [];
   const vehiclesData = vehicles?.responseContent || [];
 
@@ -133,14 +134,14 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {upcomingRidesData.slice(0, 3).map((ride) => (
                     <div key={ride.tripId} className="flex items-center space-x-4 rounded-lg border p-4">
-                      <div className="flex-1 space-y-1">
+                      <div className="flex-1 space-y-2">
                         <div className="flex items-center space-x-2 text-sm">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{ride.pickupPoint.placeAddress} → {ride.destinationPoint.placeAddress}</span>
+                          <span className="font-medium">{ride.sourceAddress.placeAddress} → {ride.destinationAddress.placeAddress}</span>
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <Clock className="h-4 w-4" />
-                          <span>{new Date(ride.rideStartTime).toLocaleString()}</span>
+                          <span>{new Date(ride.tripStartDateTime).toLocaleString()}</span>
                         </div>
                         {ride.vehicleNumber && (
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -148,16 +149,32 @@ export default function Dashboard() {
                             <span>{ride.vehicleNumber}</span>
                           </div>
                         )}
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                          ride.tripStatus === 'ALLOTTED' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {ride.tripStatus}
-                        </span>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span><span className="font-medium">Seats:</span> {ride.availableSeats} available</span>
+                          <span><span className="font-medium">Booked:</span> {ride.bookedSeats}</span>
+                        </div>
+                        {ride.routeDistanceInKm && ride.routeDurationInMinutes && (
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span><span className="font-medium">Distance:</span> {ride.routeDistanceInKm.toFixed(1)} km</span>
+                            <span><span className="font-medium">Duration:</span> {Math.round(ride.routeDurationInMinutes)} min</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            ride.tripStatus === 'OFFERED' ? 'bg-blue-100 text-blue-800' :
+                            ride.tripStatus === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' :
+                            ride.tripStatus === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                            ride.tripStatus === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {ride.tripStatus}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
                   <Link to="/my-rides">
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full mt-4">
                       View All Rides
                     </Button>
                   </Link>

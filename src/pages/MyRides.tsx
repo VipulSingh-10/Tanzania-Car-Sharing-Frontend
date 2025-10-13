@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
-import { RideBasicInfoDTO, CancelRideRequestDTO } from '@/types/api';
+import { RideBasicInfoDTO, CancelRideRequestDTO, DriverUpcomingTripDTO } from '@/types/api';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { MapPin, Clock, Car, Users, X } from 'lucide-react';
+import { MapPin, Clock, Car, Users, X, DollarSign } from 'lucide-react';
 
 export default function MyRides() {
   const { userId } = useAuth();
@@ -123,6 +123,101 @@ export default function MyRides() {
     </Card>
   );
 
+  // New component for Driver's Trip Card
+  const DriverTripCard = ({ trip, showCancelButton = false }: { trip: DriverUpcomingTripDTO; showCancelButton?: boolean }) => (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div className="space-y-3 flex-1">
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">
+                {trip.sourceAddress.placeAddress} → {trip.destinationAddress.placeAddress}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-1">
+                <Clock className="h-4 w-4" />
+                <span>{new Date(trip.tripStartDateTime).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Car className="h-4 w-4" />
+                <span>{trip.vehicleNumber}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Distance:</span>{' '}
+                <span className="font-medium">{trip.routeDistanceInKm.toFixed(1)} km</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Duration:</span>{' '}
+                <span className="font-medium">{Math.round(trip.routeDurationInMinutes)} min</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center space-x-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span>
+                  <span className="font-medium">{trip.availableSeats}</span> available
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Booked:</span>{' '}
+                <span className="font-medium">{trip.bookedSeats}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <DollarSign className="h-4 w-4 text-green-600" />
+                <span className="font-medium text-green-600">
+                  ${trip.estimatedEarnings.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {trip.passengers.length > 0 && (
+              <div className="mt-2 pt-2 border-t">
+                <p className="text-sm font-medium mb-1">Passengers ({trip.passengers.length}):</p>
+                <div className="space-y-1">
+                  {trip.passengers.map((passenger, idx) => (
+                    <div key={idx} className="text-sm text-muted-foreground pl-4">
+                      • {passenger.userId} - {passenger.bookedSeats} seat(s)
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="inline-block">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                trip.tripStatus === 'OFFERED' ? 'bg-blue-100 text-blue-800' :
+                trip.tripStatus === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' :
+                trip.tripStatus === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                trip.tripStatus === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {trip.tripStatus}
+              </span>
+            </div>
+          </div>
+          {showCancelButton && trip.tripStatus === 'OFFERED' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleCancelRide(trip.tripId)}
+              disabled={cancelRideMutation.isPending}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -139,17 +234,18 @@ export default function MyRides() {
 
           <TabsContent value="upcoming" className="space-y-4">
             {loadingUpcoming ? (
-              <div className="text-center py-8">Loading upcoming rides...</div>
+              <div className="text-center py-8">Loading upcoming trips...</div>
             ) : upcomingRides?.responseContent && upcomingRides.responseContent.length > 0 ? (
               <div className="space-y-4">
-                {upcomingRides.responseContent.map((ride) => (
-                  <RideCard key={ride.tripId} ride={ride} showCancelButton={true} />
+                {upcomingRides.responseContent.map((trip) => (
+                  <DriverTripCard key={trip.tripId} trip={trip} showCancelButton={true} />
                 ))}
               </div>
             ) : (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">No upcoming rides found.</p>
+                  <p className="text-muted-foreground">No upcoming trips found.</p>
+                  <p className="text-sm text-muted-foreground mt-2">Create a new trip to get started!</p>
                 </CardContent>
               </Card>
             )}

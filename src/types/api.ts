@@ -162,3 +162,74 @@ export interface VehicleRegisterRequestDTO {
   vehicleColor: string;
   seatingCapacity?: string;
 }
+
+// Passenger Details in Driver's Trip
+export interface PassengerDetails {
+  userId: string;
+  bookedSeats: number;
+  pickupLocation: Points;
+  dropoffLocation: Points;
+}
+
+// Driver's Upcoming Trip DTO (for drivers viewing their trips)
+export interface DriverUpcomingTripDTO {
+  tripId: string;
+  driverId: string;
+  vehicleNumber: string;
+  tripStatus: string; // "OFFERED", "IN_PROGRESS", "COMPLETED", "CANCELLED"
+  sourceAddress: Points;
+  destinationAddress: Points;
+  tripStartDateTime: string; // ISO-8601 with timezone
+  tripTimezone: string; // IANA timezone (e.g., "Europe/Berlin", "Asia/Kolkata")
+  offeredSeat: number;
+  availableSeats: number;
+  bookedSeats: number;
+  passengers: PassengerDetails[]; // List of passengers who booked this trip
+  routeDistanceInKm: number;
+  routeDurationInMinutes: number;
+  pricePerKm: number;
+  estimatedEarnings: number;
+}
+
+// Driver Details in Passenger's Ride
+export interface DriverDetails {
+  name: string;
+  rating: number;
+  totalTrips: number;
+}
+
+// Passenger's Upcoming Ride DTO (for passengers viewing their rides)
+export interface PassengerUpcomingRideDTO {
+  rideId: string;
+  tripId: string;
+  driverId: string;
+  vehicleNumber: string;
+  rideStatus: string; // "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"
+  pickupLocation: Points;
+  dropoffLocation: Points;
+  tripStartDateTime: string; // ISO-8601 with timezone
+  tripTimezone: string; // IANA timezone
+  bookedSeats: number;
+  rideDistanceInKm: number;
+  rideDurationInMinutes: number;
+  pricePerKm: number;
+  estimatedFare: number;
+  driverDetails: DriverDetails;
+}
+
+// Trip Search Result (for search endpoints)
+export interface TripSearchResultDTO {
+  tripId: string;
+  tripStatus: string; // "OFFERED"
+  driverId: string;
+  vehicleNumber: string;
+  sourceAddress: Points;
+  destinationAddress: Points;
+  tripStartDateTimeUTC: string; // UTC time
+  tripTimezone: string;
+  offeredSeat: number;
+  currSeats: number;
+  pricePerKm: number;
+  routeDistance: number; // in meters
+  routeDuration: number; // in seconds
+}
