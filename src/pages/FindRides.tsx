@@ -123,11 +123,12 @@ export default function FindRides() {
 
 
   // Prepare map markers for found rides
-  const mapMarkers = rides.map(ride => ({
-    position: { lat: ride.pickupPoint.latitude, lng: ride.pickupPoint.longitude },
-    title: `${ride.fullName}'s Trip`,
-    info: `${ride.pickupPoint.placeAddress} → ${ride.destinationPoint.placeAddress}`,
-  }));
+  const mapMarkers = rides.map((ride: any) => {
+    // Handle both old and new backend response formats
+    const lat = ride.sourceAddress?.latitude || ride.pickupPoint?.latitude || 0;
+    const lng = ride.sourceAddress?.longitude || ride.pickupPoint?.longitude || 0;
+    return { latitude: lat, longitude: lng };
+  });
 
   return (
     <Layout>
@@ -207,7 +208,7 @@ export default function FindRides() {
             </CardHeader>
             <CardContent>
               <MapView
-                markers={rides.map(r => ({ latitude: r.pickupPoint.latitude, longitude: r.pickupPoint.longitude })) as MarkerLoc[]}
+                markers={mapMarkers as MarkerLoc[]}
                 height="256px"
               />
             </CardContent>
@@ -217,46 +218,66 @@ export default function FindRides() {
         {rides.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Available Rides</h2>
-            {rides.map((ride) => (
-              <Card key={ride.tripId}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {ride.pickupPoint.placeAddress} → {ride.destinationPoint.placeAddress}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4" />
-                          <span>{new Date(ride.tripStartTime).toLocaleString()}</span>
+            {rides.map((ride: any) => {
+              // Calculate available seats from backend data
+              const availableSeats = (ride.offeredSeat || 0) - (ride.currSeats || 0);
+              
+              return (
+                <Card key={ride.tripId}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {ride.sourceAddress?.placeAddress || ride.pickupPoint?.placeAddress || 'N/A'} → {ride.destinationAddress?.placeAddress || ride.destinationPoint?.placeAddress || 'N/A'}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <div className="flex items-center space-x-1">
+                            <Clock className="h-4 w-4" />
+                            <span>
+                              {ride.tripStartDateTimeUTC 
+                                ? new Date(ride.tripStartDateTimeUTC).toLocaleString() 
+                                : ride.tripStartTime 
+                                  ? new Date(ride.tripStartTime).toLocaleString()
+                                  : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Car className="h-4 w-4" />
+                            <span>{ride.vehicleNumber || 'N/A'}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className="font-medium">Driver: {ride.driverId || ride.fullName || 'N/A'}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Car className="h-4 w-4" />
-                          <span>{ride.vehicleNumber}</span>
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{availableSeats} seats available</span>
                         </div>
+                        {ride.routeDistance && (
+                          <div className="text-sm text-muted-foreground">
+                            Distance: {(ride.routeDistance / 1000).toFixed(1)} km • Duration: {Math.round(ride.routeDuration / 60)} min
+                          </div>
+                        )}
+                        {ride.pricePerKm && (
+                          <div className="text-sm font-semibold text-primary">
+                            Price: ${((ride.routeDistance / 1000) * ride.pricePerKm).toFixed(2)}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <span className="font-medium">{ride.fullName}</span>
-                        <span>{ride.phoneNumber}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{ride.availableSeats} seats available</span>
-                      </div>
+                      <Button 
+                        onClick={() => handleJoinRide(ride.tripId)}
+                        disabled={availableSeats < searchParams.requestedSeats}
+                      >
+                        Join Ride
+                      </Button>
                     </div>
-                    <Button 
-                      onClick={() => handleJoinRide(ride.tripId)}
-                      disabled={ride.availableSeats < searchParams.requestedSeats}
-                    >
-                      Join Ride
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
