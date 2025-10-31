@@ -11,9 +11,18 @@ import { Link } from 'react-router-dom';
 export default function Dashboard() {
   const { userInfo } = useAuth();
 
+  // Fetch driver's upcoming trips (rides they're offering)
   const { data: upcomingRides, error: upcomingRidesError } = useQuery({
     queryKey: ['upcomingRides', userInfo?.userId],
     queryFn: () => apiService.getUpcomingRides(userInfo!.userId!),
+    enabled: !!userInfo?.userId,
+    retry: false, // Don't retry if service not implemented
+  });
+
+  // Fetch passenger's upcoming rides (rides they've booked)
+  const { data: passengerRides, error: passengerRidesError } = useQuery({
+    queryKey: ['passengerRides', userInfo?.userId],
+    queryFn: () => apiService.getMyUpcomingRidesAsPassenger(userInfo!.userId!),
     enabled: !!userInfo?.userId,
     retry: false, // Don't retry if service not implemented
   });
@@ -27,7 +36,11 @@ export default function Dashboard() {
 
   // Updated to handle new response structure
   const upcomingRidesData = upcomingRides?.responseContent || [];
+  const passengerRidesData = passengerRides?.responseContent || [];
   const vehiclesData = vehicles?.responseContent || [];
+  
+  // Calculate total upcoming rides (driver + passenger)
+  const totalUpcomingRides = upcomingRidesData.length + passengerRidesData.length;
 
   return (
     <Layout>
@@ -45,7 +58,10 @@ export default function Dashboard() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{upcomingRidesData.length}</div>
+              <div className="text-2xl font-bold">{totalUpcomingRides}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {upcomingRidesData.length} as driver • {passengerRidesData.length} as passenger
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -63,7 +79,10 @@ export default function Dashboard() {
               <Search className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">-</div>
+              <div className="text-2xl font-bold">{totalUpcomingRides}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Combined upcoming rides
+              </p>
             </CardContent>
           </Card>
         </div>
