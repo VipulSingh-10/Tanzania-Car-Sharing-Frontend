@@ -64,6 +64,7 @@ export interface SignUpResponseDTO {
 export interface RideDTO {
   userId?: string;
   tripId?: string;
+  driverId?: string;
   pickupPoint: Points;
   destinationPoint: Points;
   rideStartTime: string;

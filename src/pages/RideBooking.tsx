@@ -21,6 +21,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { Points, TripBasicInfoDTO, RideDTO } from '@/types/api';
+import { formatDateTimeWithTimezone } from '@/lib/timezone-utils';
 
 export default function RideBooking() {
   const { userId } = useAuth();
@@ -113,9 +114,10 @@ export default function RideBooking() {
     try {
       const rideData: RideDTO = {
         tripId: trip.tripId,
+        driverId: trip.driverId,
         pickupPoint,
         destinationPoint,
-        rideStartTime,
+        rideStartTime: formatDateTimeWithTimezone(rideStartTime),
         requestedSeats,
       };
 

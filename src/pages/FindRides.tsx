@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, MapPin, Clock, Users, Car } from 'lucide-react';
 import LocationSearch from '@/components/LocationSearch';
 import MapView, { MarkerLoc } from '@/components/MapView';
+import { formatDateTimeWithTimezone } from '@/lib/timezone-utils';
 
 export default function FindRides() {
   const { userId } = useAuth();
@@ -70,9 +71,14 @@ export default function FindRides() {
     if (!userId) return;
 
     try {
+      // Find the ride to get driverId
+      const ride = rides.find(r => r.tripId === tripId);
+      
       const rideData: RideDTO = {
         ...searchParams,
-        tripId
+        tripId,
+        driverId: ride?.driverId,
+        rideStartTime: formatDateTimeWithTimezone(searchParams.rideStartTime)
       };
       
       const response = await apiService.joinTrip(userId, rideData);
