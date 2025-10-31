@@ -219,7 +219,7 @@ export default function RideTracking() {
                           <div className="flex justify-between items-center">
                             <Button variant="outline" size="sm">View Details</Button>
                             {ride.tripStatus.toLowerCase() !== 'completed' && ride.tripStatus.toLowerCase() !== 'cancelled' && (
-                              <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId); }}>
+                              <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId, undefined, true); }}>
                                 Cancel
                               </Button>
                             )}
@@ -284,7 +284,7 @@ export default function RideTracking() {
                           <div className="flex justify-between items-center">
                             <Button variant="outline" size="sm">View Details</Button>
                             {ride.rideStatus.toLowerCase() !== 'completed' && ride.rideStatus.toLowerCase() !== 'cancelled' && (
-                              <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId); }}>
+                              <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId, ride.rideId, false); }}>
                                 Cancel
                               </Button>
                             )}
@@ -637,7 +637,7 @@ function DriverTripsView({
                 <div className="flex justify-between items-center">
                   <Button variant="outline" size="sm">View Details</Button>
                   {ride.tripStatus.toLowerCase() !== 'completed' && ride.tripStatus.toLowerCase() !== 'cancelled' && (
-                    <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId); }}>
+                    <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId, undefined, true); }}>
                       Cancel
                     </Button>
                   )}
@@ -776,7 +776,7 @@ function PassengerRidesView({
                 <div className="flex justify-between items-center">
                   <Button variant="outline" size="sm">View Details</Button>
                   {ride.rideStatus.toLowerCase() !== 'completed' && ride.rideStatus.toLowerCase() !== 'cancelled' && (
-                    <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId); }}>
+                    <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleCancelRide(ride.tripId, ride.rideId, false); }}>
                       Cancel
                     </Button>
                   )}
