@@ -73,17 +73,34 @@ export interface RideDTO {
 }
 
 export interface TripBasicInfoDTO {
-  userId: string;
+  userId?: string;
+  driverId?: string; // Alternative field name from backend
   tripId: string;
+  tripStatus?: string;
   profilePic?: string;
-  fullName: string;
-  vehicleNumber: string;
-  pickupPoint: Points;
-  destinationPoint: Points;
-  tripStartTime: string;
-  availableSeats: number;
-  phoneNumber: string;
-  requestedSeats: number;
+  fullName?: string;
+  vehicleNumber?: string;
+  pickupPoint?: Points;
+  destinationPoint?: Points;
+  sourceAddress?: Points; // Alternative field name from backend
+  destinationAddress?: Points; // Alternative field name from backend
+  sourceLocation?: { x: number; y: number }; // Backend GIS format
+  destinationLocation?: { x: number; y: number }; // Backend GIS format
+  tripStartTime?: string;
+  tripStartDateTimeUTC?: string; // Alternative field name from backend
+  tripTimezone?: string;
+  availableSeats?: number;
+  offeredSeat?: number; // Alternative field name from backend
+  currSeats?: number;
+  phoneNumber?: string;
+  requestedSeats?: number;
+  // OSRM Route information
+  routeGeometry?: Geometry;
+  routeDistance?: number;
+  routeDuration?: number;
+  pricePerKm?: number;
+  joinedRidersId?: string[] | null;
+  createdDate?: string;
 }
 
 export interface RideBasicInfoDTO {

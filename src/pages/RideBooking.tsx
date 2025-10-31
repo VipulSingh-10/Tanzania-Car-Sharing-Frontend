@@ -234,20 +234,20 @@ export default function RideBooking() {
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                         <span className="text-primary font-semibold">
-                          {trip.fullName.charAt(0)}
+                          {trip.fullName?.charAt(0) || trip.userId?.charAt(0) || 'D'}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">{trip.fullName}</h3>
+                        <h3 className="font-semibold text-foreground">{trip.fullName || trip.userId || 'Driver'}</h3>
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <Car className="h-4 w-4" />
-                          <span>{trip.vehicleNumber}</span>
+                          <span>{trip.vehicleNumber || 'N/A'}</span>
                         </div>
                       </div>
                     </div>
                     <Badge variant="secondary">
                       <Users className="h-3 w-3 mr-1" />
-                      {trip.availableSeats} seats
+                      {trip.availableSeats || trip.offeredSeat || 0} seats
                     </Badge>
                   </div>
 
@@ -257,7 +257,10 @@ export default function RideBooking() {
                       <div>
                         <p className="text-sm font-medium">Pickup</p>
                         <p className="text-sm text-muted-foreground">
-                          {trip.pickupPoint.placeAddress || `${trip.pickupPoint.latitude}, ${trip.pickupPoint.longitude}`}
+                          {(trip.pickupPoint?.placeAddress || trip.sourceAddress?.placeAddress) || 
+                           (trip.pickupPoint && `${trip.pickupPoint.latitude}, ${trip.pickupPoint.longitude}`) ||
+                           (trip.sourceAddress && `${trip.sourceAddress.latitude}, ${trip.sourceAddress.longitude}`) ||
+                           'N/A'}
                         </p>
                       </div>
                     </div>
@@ -266,7 +269,10 @@ export default function RideBooking() {
                       <div>
                         <p className="text-sm font-medium">Destination</p>
                         <p className="text-sm text-muted-foreground">
-                          {trip.destinationPoint.placeAddress || `${trip.destinationPoint.latitude}, ${trip.destinationPoint.longitude}`}
+                          {(trip.destinationPoint?.placeAddress || trip.destinationAddress?.placeAddress) || 
+                           (trip.destinationPoint && `${trip.destinationPoint.latitude}, ${trip.destinationPoint.longitude}`) ||
+                           (trip.destinationAddress && `${trip.destinationAddress.latitude}, ${trip.destinationAddress.longitude}`) ||
+                           'N/A'}
                         </p>
                       </div>
                     </div>
@@ -276,12 +282,14 @@ export default function RideBooking() {
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span>{formatDateTime(trip.tripStartTime)}</span>
+                        <span>{formatDateTime(trip.tripStartTime || trip.tripStartDateTimeUTC)}</span>
                       </div>
-                      <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                        <Phone className="h-4 w-4" />
-                        <span>{trip.phoneNumber}</span>
-                      </div>
+                      {trip.phoneNumber && (
+                        <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                          <Phone className="h-4 w-4" />
+                          <span>{trip.phoneNumber}</span>
+                        </div>
+                      )}
                     </div>
                     <Button
                       onClick={() => handleJoinRide(trip)}
