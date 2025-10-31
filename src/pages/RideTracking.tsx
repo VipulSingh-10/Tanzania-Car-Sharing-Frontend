@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 export default function RideTracking() {
   const { userId } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedRide, setSelectedRide] = useState<RideBasicInfoDTO | null>(null);
 
   // Fetch upcoming rides
@@ -120,7 +122,7 @@ export default function RideTracking() {
                   <p className="text-muted-foreground mb-4">
                     You don't have any active or upcoming rides at the moment.
                   </p>
-                  <Button onClick={() => window.location.href = '/book-ride'}>
+                  <Button onClick={() => navigate('/book-ride')}>
                     Book a Ride
                   </Button>
                 </CardContent>
