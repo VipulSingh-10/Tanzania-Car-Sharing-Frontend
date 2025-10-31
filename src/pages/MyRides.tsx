@@ -38,18 +38,24 @@ export default function MyRides() {
   });
 
   const cancelRideMutation = useMutation({
-    mutationFn: ({ tripId, reason }: { tripId: string; reason?: string }) => {
+    mutationFn: ({ tripId, rideId, isDriver, reason }: { tripId: string; rideId?: string; isDriver: boolean; reason?: string }) => {
       const cancelData: CancelRideRequestDTO = {
         tripId,
+        rideId,
         cancellationReason: reason
       };
-      return apiService.cancelRide(userId!, cancelData);
+      
+      if (isDriver) {
+        return apiService.cancelTrip(userId!, cancelData);
+      } else {
+        return apiService.cancelRide(userId!, cancelData);
+      }
     },
-    onSuccess: (data) => {
-      if (data.success && data.responseContent?.rideCancelled) {
+    onSuccess: (data, variables) => {
+      if (data.success) {
         toast({
-          title: 'Ride cancelled',
-          description: 'Your ride has been successfully cancelled.',
+          title: variables.isDriver ? 'Trip cancelled' : 'Ride cancelled',
+          description: data.responseContent || `Your ${variables.isDriver ? 'trip' : 'ride'} has been successfully cancelled.`,
         });
         queryClient.invalidateQueries({ queryKey: ['driverTrips', userId] });
         queryClient.invalidateQueries({ queryKey: ['passengerRides', userId] });
@@ -57,7 +63,7 @@ export default function MyRides() {
       } else {
         toast({
           title: 'Cancellation failed',
-          description: data.responseContent?.errMsg || data.errorMessage || 'Failed to cancel ride',
+          description: data.errorMessage || 'Failed to cancel',
           variant: 'destructive',
         });
       }
@@ -65,15 +71,15 @@ export default function MyRides() {
     onError: () => {
       toast({
         title: 'Error',
-        description: 'Failed to cancel ride',
+        description: 'Failed to cancel',
         variant: 'destructive',
       });
     },
   });
 
-  const handleCancelRide = async (tripId: string) => {
-    if (window.confirm('Are you sure you want to cancel this ride?')) {
-      cancelRideMutation.mutate({ tripId });
+  const handleCancelRide = async (tripId: string, rideId?: string, isDriver: boolean = false) => {
+    if (window.confirm(`Are you sure you want to cancel this ${isDriver ? 'trip' : 'ride'}?`)) {
+      cancelRideMutation.mutate({ tripId, rideId, isDriver });
     }
   };
 
@@ -199,7 +205,7 @@ export default function MyRides() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleCancelRide(ride.rideId)}
+              onClick={() => handleCancelRide(ride.tripId, ride.rideId, false)}
               disabled={cancelRideMutation.isPending}
             >
               <X className="h-4 w-4 mr-1" />
@@ -297,7 +303,7 @@ export default function MyRides() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleCancelRide(trip.tripId)}
+              onClick={() => handleCancelRide(trip.tripId, undefined, true)}
               disabled={cancelRideMutation.isPending}
             >
               <X className="h-4 w-4 mr-1" />

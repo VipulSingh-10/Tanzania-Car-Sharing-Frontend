@@ -123,6 +123,7 @@ export interface JoinRideResponseDTO {
 
 export interface CancelRideRequestDTO {
   tripId: string;
+  rideId?: string;  // Only for passenger cancellations
   cancellationReason?: string;
 }
 

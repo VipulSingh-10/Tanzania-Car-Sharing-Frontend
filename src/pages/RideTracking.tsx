@@ -86,17 +86,29 @@ export default function RideTracking() {
     return new Date(dateTime).toLocaleString();
   };
 
-  const handleCancelRide = async (tripId: string) => {
+  const handleCancelRide = async (tripId: string, rideId?: string, isDriver: boolean = false) => {
     try {
-      const response = await apiService.cancelRide(userId!, {
-        tripId,
-        cancellationReason: 'User cancelled',
-      });
+      let response;
+      
+      if (isDriver) {
+        // Driver canceling their trip (cancels all associated rides)
+        response = await apiService.cancelTrip(userId!, {
+          tripId,
+          cancellationReason: 'Driver cancelled trip',
+        });
+      } else {
+        // Passenger canceling their ride
+        response = await apiService.cancelRide(userId!, {
+          tripId,
+          rideId,
+          cancellationReason: 'Passenger cancelled ride',
+        });
+      }
 
-      if (response.success && response.responseContent?.rideCancelled) {
+      if (response.success) {
         toast({
-          title: 'Ride Cancelled',
-          description: 'Your ride has been successfully cancelled.',
+          title: isDriver ? 'Trip Cancelled' : 'Ride Cancelled',
+          description: response.responseContent || `Your ${isDriver ? 'trip' : 'ride'} has been successfully cancelled.`,
         });
         refetchDriverTrips();
         refetchPassengerRides();
@@ -104,14 +116,14 @@ export default function RideTracking() {
       } else {
         toast({
           title: 'Cancellation Failed',
-          description: response.responseContent?.errMsg || 'Failed to cancel ride.',
+          description: response.errorMessage || 'Failed to cancel.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to cancel ride. Please try again.',
+        description: 'Failed to cancel. Please try again.',
         variant: 'destructive',
       });
     }
@@ -315,7 +327,10 @@ export default function RideTracking() {
 }
 
 // Helper Components
-function RideDetailsPanel({ selectedRide, handleCancelRide }: { selectedRide: SelectedRide; handleCancelRide: (tripId: string) => void }) {
+function RideDetailsPanel({ selectedRide, handleCancelRide }: { 
+  selectedRide: SelectedRide; 
+  handleCancelRide: (tripId: string, rideId?: string, isDriver?: boolean) => void 
+}) {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'confirmed':
@@ -422,7 +437,7 @@ function RideDetailsPanel({ selectedRide, handleCancelRide }: { selectedRide: Se
                 <Button
                   className="w-full"
                   variant="destructive"
-                  onClick={() => handleCancelRide(ride.tripId)}
+                  onClick={() => handleCancelRide(ride.tripId, undefined, true)}
                 >
                   Cancel Trip
                 </Button>
@@ -490,7 +505,7 @@ function RideDetailsPanel({ selectedRide, handleCancelRide }: { selectedRide: Se
                 <Button
                   className="w-full"
                   variant="destructive"
-                  onClick={() => handleCancelRide(ride.tripId)}
+                  onClick={() => handleCancelRide(ride.tripId, ride.rideId, false)}
                 >
                   Cancel Ride
                 </Button>
@@ -512,7 +527,7 @@ function DriverTripsView({
   driverTrips: DriverUpcomingTripDTO[];
   selectedRide: SelectedRide;
   setSelectedRide: (ride: SelectedRide) => void;
-  handleCancelRide: (tripId: string) => void;
+  handleCancelRide: (tripId: string, rideId?: string, isDriver?: boolean) => void;
 }) {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -646,7 +661,7 @@ function PassengerRidesView({
   passengerRides: PassengerUpcomingRideDTO[];
   selectedRide: SelectedRide;
   setSelectedRide: (ride: SelectedRide) => void;
-  handleCancelRide: (tripId: string) => void;
+  handleCancelRide: (tripId: string, rideId?: string, isDriver?: boolean) => void;
 }) {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

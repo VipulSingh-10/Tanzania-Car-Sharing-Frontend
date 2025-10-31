@@ -150,8 +150,17 @@ class ApiService {
     }, true);
   }
 
-  async cancelRide(userId: string, cancelData: CancelRideRequestDTO): Promise<ResponseDTO<CancelRideResponseDTO>> {
-    return this.makeRequest('/api/myrides/cancel', {
+  // Passenger cancels their ride
+  async cancelRide(userId: string, cancelData: CancelRideRequestDTO): Promise<ResponseDTO<string>> {
+    return this.makeRequest('/api/rides/cancel', {
+      method: 'POST',
+      body: JSON.stringify({ userId, requestContent: cancelData }),
+    }, true);
+  }
+
+  // Driver cancels their trip (cancels all associated rides)
+  async cancelTrip(userId: string, cancelData: CancelRideRequestDTO): Promise<ResponseDTO<string>> {
+    return this.makeRequest('/api/trips/cancel', {
       method: 'POST',
       body: JSON.stringify({ userId, requestContent: cancelData }),
     }, true);
