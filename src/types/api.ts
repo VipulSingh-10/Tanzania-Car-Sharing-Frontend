@@ -115,8 +115,9 @@ export interface RideBasicInfoDTO {
   vehicleNumber: string;
 }
 
+// Join Ride Response - Backend returns a success message string
 export interface JoinRideResponseDTO {
-  rideJoined: boolean;
+  rideJoined?: boolean;
   errMsg?: string;
 }
 

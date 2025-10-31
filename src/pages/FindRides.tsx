@@ -82,17 +82,21 @@ export default function FindRides() {
       };
       
       const response = await apiService.joinTrip(userId, rideData);
-      if (response.success && response.responseContent?.rideJoined) {
+      
+      // Backend returns success with a string message in responseContent
+      if (response.success) {
         toast({
           title: 'Success!',
-          description: 'You have successfully joined the ride.',
+          description: typeof response.responseContent === 'string' 
+            ? response.responseContent 
+            : 'You have successfully joined the ride.',
         });
         // Refresh the search results
         handleSearch();
       } else {
         toast({
           title: 'Failed to join ride',
-          description: response.responseContent?.errMsg || response.errorMessage || 'Unknown error',
+          description: response.errorMessage || 'Unknown error',
           variant: 'destructive',
         });
       }

@@ -123,16 +123,19 @@ export default function RideBooking() {
 
       const response = await apiService.joinTrip(userId!, rideData);
       
-      if (response.success && response.responseContent?.rideJoined) {
+      // Backend returns success with a string message in responseContent
+      if (response.success) {
         toast({
           title: 'Ride Booked!',
-          description: 'You have successfully joined the ride.',
+          description: typeof response.responseContent === 'string' 
+            ? response.responseContent 
+            : 'You have successfully joined the ride.',
         });
         navigate('/my-rides');
       } else {
         toast({
           title: 'Booking Failed',
-          description: response.responseContent?.errMsg || 'Failed to book the ride.',
+          description: response.errorMessage || 'Failed to book the ride.',
           variant: 'destructive',
         });
       }
