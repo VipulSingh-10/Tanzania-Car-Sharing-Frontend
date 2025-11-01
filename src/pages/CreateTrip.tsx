@@ -61,7 +61,7 @@ export default function CreateTrip() {
         if (tripInfo.routeDistanceInKm && tripInfo.routeDurationInMinutes) {
           const distance = tripInfo.routeDistanceInKm.toFixed(1);
           const duration = Math.round(tripInfo.routeDurationInMinutes);
-          description += `\n Toatal Distance: ${distance} km\n Estimated ride duration: ${duration} minutes`;
+          description += `\n Distance: ${distance} km\n Estimated duration: ${duration} minutes`;
         }
         
         toast({
